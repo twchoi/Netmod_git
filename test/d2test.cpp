@@ -9,7 +9,7 @@
  */
 using namespace Starsky;
 using namespace std;
-#define ADDR_MAX 65536
+//#define ADDR_MAX 65536
 //#define INT64
 #ifdef INT64
   typedef unsigned long long my_int;
@@ -82,8 +82,8 @@ int main(int argc, char *argv[])
 	{
 	    //pick a random node to insert an item.
 	    AddressedNode* item_source = dynamic_cast<AddressedNode*> (item_src.select() );
-	    //double cqsize = (double) ( (ADDR_MAX / (double)sqrt( cacheNet_ptr->guessNetSize(item_source,1) ) ) * sqrt(alpha) ); 
-	    double cqsize = (double) ( (ADDR_MAX / (double)sqrt( nodes ) ) * sqrt(alpha) ); 
+	    double cqsize = (double) ( (ADDR_MAX / (double)sqrt( cacheNet_ptr->guessNetSizeLog(item_source,1) ) ) * sqrt(alpha) ); 
+	    //double cqsize = (double) ( (ADDR_MAX / (double)sqrt( nodes ) ) * sqrt(alpha) ); 
 	    //cout << "cqsize: " << cqsize << endl;
             //insert the item to item_source node
 	    item_source->insertItem(*item_it );
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 		//cout << "number of iteration: \t " << it_no << endl;
 	        //set starting point
 	        AddressedNode* query_start = dynamic_cast<AddressedNode*> (uns_start.select() );
-	        double cqsize = (double) ( (ADDR_MAX / (double)sqrt( queryNet->guessNetSize(query_start,0) ) ) * sqrt(alpha) ); 
+	        double cqsize = (double) ( (ADDR_MAX / (double)sqrt( queryNet->guessNetSizeLog(query_start,0) ) ) * sqrt(alpha) ); 
 	        //double cqsize = (double) ( (ADDR_MAX / (double)sqrt( nodes ) ) * sqrt(alpha) ); 
 		//cout << "cqsize: " << cqsize << endl;
 	        std::pair<my_int, my_int> q_ranges = queryNet_ptr->getRange(cqsize);

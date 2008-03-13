@@ -246,7 +246,8 @@ vector<my_int> DeetooNetwork::getNeighborDist(bool cq) {
 }
 my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq)
 {
-  my_int log_d = guessNetSize(tnode,cq);
+  my_int log_d = (my_int)(log(guessNetSize(tnode,cq)) );
+  //cout << "log_d: " << log_d << endl;
   //cout << "nd_map size: " << node_map.size() << "\tquery_nm size: " << query_nm.size() << endl;
   std::map<my_int, AddressedNode*>::const_iterator upper;
   //cout << "--------------------------------" << endl;
