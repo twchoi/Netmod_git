@@ -49,6 +49,15 @@ AddressedNode::AddressedNode(const my_int addr, std::set<std::string> itemSet)
   _itemSet = itemSet;
 }
 
+AddressedNode::AddressedNode(const my_int addr, std::set<StringObject> objSet)
+{
+  _c_address = addr;
+  addr_j = addr % AMAX;
+  addr_i = (addr - addr_j) / AMAX;
+  _q_address = addr_j*AMAX + addr_i;
+  _objSet = objSet;
+}
+
 my_int AddressedNode::getAddress(bool cache)
 {
     if (cache) { return _c_address; }
@@ -75,12 +84,32 @@ bool AddressedNode::searchItem(std::string qItem)
 	  return false;
   }
 }
+bool AddressedNode::searchObject(StringObject qObj)
+{
+  bool ret = false;	
+  std::set<StringObject>::const_iterator sit;
+  for (sit == _objSet.begin(); sit != _objSet.end(); sit++) {
+    if (sit->content == qObj.content) {
+      ret = true;
+    }
+  }
+  return ret;
+}
 void AddressedNode::insertItem(std::string item)
 {
     _itemSet.insert(item);
 }
 
+void AddressedNode::insertObject(StringObject obj)
+{
+    _objSet.insert(obj);
+}
+
 void AddressedNode::deleteItem(std::string item)
 {
     _itemSet.erase(item);
+}
+void AddressedNode::deleteObject(StringObject obj)
+{
+    _objSet.erase(obj);
 }

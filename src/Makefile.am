@@ -108,6 +108,8 @@ newmancom.h newmancom.cpp \
 nullpart.h \
 node.h \
 node.cpp \
+nodeAction.h \
+nodeAction.cpp \
 nodefactory.h nodefactory.cpp \
 nodeiterator.h \
 noisystardnet.h \

@@ -48,12 +48,20 @@ namespace Starsky {
        */
       my_int _q_address;
       std::set<std::string> _itemSet;
+      std::set<StringObject> _objSet;
       //bool _own;
       my_int _dist;
       my_int _small;
       my_int _big;
        
     public:
+      struct StringObject {
+        std::string content;
+        my_int start;
+        my_int end;
+        AddressedNode* owner;
+      };
+
       my_int addr_i; // column address
       my_int addr_j; // row address
       bool cache;
@@ -64,6 +72,7 @@ namespace Starsky {
        * @param own if true, delete the item when we are deleted
        */
       AddressedNode(const my_int addr, std::set<std::string> itemSet) ;
+      AddressedNode(const my_int addr, std::set<StringObject> objSet) ;
       ~AddressedNode() {_itemSet.clear(); }
       
       /**
@@ -80,18 +89,22 @@ namespace Starsky {
        * return to the pointer to the object being contained.
        */
       std::set<std::string> getItem() const { return _itemSet; }
+      std::set<StringObject> getObject() const { return _objSet; }
       /**
        * return true if this node has qItem.
        */
       bool searchItem( std::string qItem);
+      bool searchObject( StringObject qObj);
       /**
        * @param item, insert item to a node
        */
       void insertItem(std::string item);
+      void insertObject(StringObject obj);
       /**
        * @param item delete this item from a node
        */
       void deleteItem(std::string item);
+      void deleteObject(StringObject obj);
     };
 }
 #endif
