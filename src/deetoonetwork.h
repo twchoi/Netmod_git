@@ -128,6 +128,7 @@ class DeetooNetwork : public Network {
 	 * when a new node join, maximize minimum distance to the neighbors' address by picking up two candidate addresses then finally select and address with longer minimum distance to the neighbors.
 	 */
 	void createEvenNet(int net_size);
+	void createNullNet();
     protected:
 	Ran1Random& _r_short;
 };

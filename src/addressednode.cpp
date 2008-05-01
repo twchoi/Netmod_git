@@ -49,7 +49,7 @@ AddressedNode::AddressedNode(const my_int addr, std::set<std::string> itemSet)
   _itemSet = itemSet;
 }
 
-AddressedNode::AddressedNode(const my_int addr, std::set<StringObject> objSet)
+AddressedNode::AddressedNode(const my_int addr, std::vector<StringObject> objSet)
 {
   _c_address = addr;
   addr_j = addr % AMAX;
@@ -86,14 +86,22 @@ bool AddressedNode::searchItem(std::string qItem)
 }
 bool AddressedNode::searchObject(StringObject qObj)
 {
+  
   bool ret = false;	
-  std::set<StringObject>::const_iterator sit;
+  std::vector<StringObject>::const_iterator sit;
   for (sit == _objSet.begin(); sit != _objSet.end(); sit++) {
-    if (sit->content == qObj.content) {
+    if (sit->content == qObj.content ) {
       ret = true;
     }
   }
   return ret;
+  /**
+  if (_objSet.find(qObj) != _objSet.end() ) {
+    return true;
+  }
+  else {
+    return false;
+  }*/
 }
 void AddressedNode::insertItem(std::string item)
 {
@@ -102,14 +110,18 @@ void AddressedNode::insertItem(std::string item)
 
 void AddressedNode::insertObject(StringObject obj)
 {
-    _objSet.insert(obj);
+    //_objSet.insert(obj);
+    _objSet.push_back(obj);
 }
 
 void AddressedNode::deleteItem(std::string item)
 {
     _itemSet.erase(item);
 }
+/**
 void AddressedNode::deleteObject(StringObject obj)
 {
+  //erase() need iterator 
     _objSet.erase(obj);
 }
+*/

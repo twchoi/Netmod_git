@@ -25,6 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "node.h"
 #include <set>
+#include <vector>
+#include "dataobject.h"
 //#define INT64
 #ifdef INT64
   typedef unsigned long long my_int;
@@ -32,6 +34,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
   typedef unsigned long my_int;
 #endif
 namespace Starsky {
+
+  struct StringObject {
+    std::string content;
+    my_int start;
+    my_int end;
+    //AddressedNode* owner;
+  };
 
   /**
    * Addressed node class which every node in the network has address
@@ -48,19 +57,13 @@ namespace Starsky {
        */
       my_int _q_address;
       std::set<std::string> _itemSet;
-      std::set<StringObject> _objSet;
+      std::vector<StringObject> _objSet;
       //bool _own;
       my_int _dist;
       my_int _small;
       my_int _big;
        
     public:
-      struct StringObject {
-        std::string content;
-        my_int start;
-        my_int end;
-        AddressedNode* owner;
-      };
 
       my_int addr_i; // column address
       my_int addr_j; // row address
@@ -72,7 +75,7 @@ namespace Starsky {
        * @param own if true, delete the item when we are deleted
        */
       AddressedNode(const my_int addr, std::set<std::string> itemSet) ;
-      AddressedNode(const my_int addr, std::set<StringObject> objSet) ;
+      AddressedNode(const my_int addr, std::vector<StringObject> objSet) ;
       ~AddressedNode() {_itemSet.clear(); }
       
       /**
@@ -89,7 +92,7 @@ namespace Starsky {
        * return to the pointer to the object being contained.
        */
       std::set<std::string> getItem() const { return _itemSet; }
-      std::set<StringObject> getObject() const { return _objSet; }
+      std::vector<StringObject> getObject() const { return _objSet; }
       /**
        * return true if this node has qItem.
        */
@@ -104,7 +107,7 @@ namespace Starsky {
        * @param item delete this item from a node
        */
       void deleteItem(std::string item);
-      void deleteObject(StringObject obj);
+      //void deleteObject(StringObject obj);
     };
 }
 #endif

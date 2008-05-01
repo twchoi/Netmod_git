@@ -127,7 +127,7 @@ void DeetooNetwork::create(int n) {
       
       node_map[addr] = anode;
       add(anode);
-      t_addr +=step;
+      t_addr += step;
     }
 
     //Form ring.
@@ -136,7 +136,9 @@ void DeetooNetwork::create(int n) {
     makeShortcutConnection(node_map, true);
     //printNetInfo(true);
 }
-
+void DeetooNetwork::createNullNet() {
+  node_map.clear();
+}
 void DeetooNetwork::createQueryNet(const std::map<my_int, AddressedNode*>& nd_map)
 {
     //using addresses in query space, make node map for query.
