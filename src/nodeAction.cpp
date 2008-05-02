@@ -1,5 +1,6 @@
 #include <netmodeler.h>
 #include "nodeAction.h"
+#include "netmodeler.h"
 
 using namespace Starsky;
 using namespace std;
@@ -10,13 +11,25 @@ NodeLeaveAction::NodeLeaveAction(EventScheduler& sched, DeetooNetwork& cn, Deeto
 
 }
 void NodeLeaveAction::Execute() {
+  /**
+  cout << "-------------NodeLeaveAction-------------- " 
+	  << _me->getAddress(1) << ", "
+	  << _me->getAddress(0) << endl;
+  */
   //schedule a time to add a new node:
-  _cnet.remove(_me);
-  _qnet.remove(_me);
+  std::cout << _sched.getCurrentTime() << "\t"
+            << _cnet.getNodeSize() << "\t"
+            << _cnet.getEdgeSize() << "\t"
+	    << _qnet.getNodeSize() << "\t"
+	    << _qnet.getEdgeSize() 
+            << std::endl;
   my_int caddr = _me->getAddress(1);
   my_int qaddr = _me->getAddress(0);
   _cnet.node_map.erase(_cnet.node_map.find(caddr));
   _qnet.node_map.erase(_qnet.node_map.find(qaddr));
+  _cnet.remove(_me);
+  _qnet.remove(_me);
+  //my_int caddr = _me->getAddress(1);
   std::cout << _sched.getCurrentTime() << "\t"
             << _cnet.getNodeSize() << "\t"
             << _cnet.getEdgeSize() << "\t"
@@ -37,14 +50,9 @@ NodeJoinAction::NodeJoinAction(EventScheduler& sched, Random& r, DeetooNetwork& 
 }
 
 void NodeJoinAction::Execute() {
-  std::cout << _sched.getCurrentTime() << "\t"
-            << _cnet.getNodeSize() << "\t"
-            << _cnet.getEdgeSize() << "\t"
-            << _qnet.getNodeSize() << "\t"
-            << _qnet.getEdgeSize() 
-	    << std::endl;
+  //cout << "-------------NodeJoinAction-------------- " << endl;
   my_int c_addr = (my_int)(_r.getDouble01() * WMAX);
-  cout << "c_addr: " << c_addr << endl;
+  //cout << "c_addr: " << c_addr << endl;
   //std::set<std::string> items;
   std::vector<StringObject> items;
   items.clear();
@@ -53,16 +61,14 @@ void NodeJoinAction::Execute() {
   while (!fresh_addr) {
     if (_cnet.node_map.find(c_addr) == _cnet.node_map.end() && c_addr != 0) {
       me = new AddressedNode(c_addr, items);
-      cout << "in while addr: " << me->getAddress(1) << endl;
+      //cout << "in while addr: " << me->getAddress(1) << endl;
       fresh_addr = 1;
     }
   }
   my_int q_addr = me->getAddress(0);
-  cout << "q_addr: " << q_addr << endl;
-  cout << "before getConnection" << endl;    
+  //cout << "q_addr: " << q_addr << endl;
   getConnection(_cnet, me, true);
   getConnection(_qnet, me, false);
-  cout << "after getConnection" << endl;    
   //Make sure I get added no matter what
   _cnet.add(me);
   _qnet.add(me);
@@ -90,7 +96,15 @@ void NodeJoinAction::Execute() {
 
 void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool cache)
 {
+  //cout << "-------------getConnection: " << endl;
   my_int addr = me->getAddress(cache);
+  /**
+  map<my_int, AddressedNode*>::const_iterator ttt;
+  for (ttt = net.node_map.begin(); ttt != net.node_map.end(); ttt++) {
+    cout << ttt->first << ", ";
+  }
+  cout << endl;
+  */
   // make connections: ring connection as well as shortcut connections
   if (net.getNodeSize() == 0) {
     // *me* is the only node in this network
@@ -103,36 +117,39 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
     }
   }
   else {
-    // For caching network.
     map<my_int, AddressedNode*>::const_iterator cit = net.node_map.upper_bound(addr);
     AddressedNode* neighbor0;
     AddressedNode* neighbor1; 
-    if (cit == net.node_map.end() ) { //my node has the biggest address.
+    if (cit == net.node_map.end() || cit == net.node_map.begin() ) { //my node has the biggest or smallest address.
+      //cout << "biggest or smallest" << endl;
       neighbor1 = (net.node_map.begin())->second;
-      cit--;
-      neighbor0 = cit->second; 
-    }
-    else if(cit == net.node_map.begin() ) { // my node has the smallest address.
-      neighbor1 = cit->second;
-      cit = net.node_map.end();
-      cit--;
-      neighbor0 = cit->second;
+      neighbor0 = (net.node_map.rbegin())->second; 
+      //cout << neighbor1->getAddress(cache) << ", " << neighbor0->getAddress(cache) << endl; 
     }
     else {  //my node has an address between min and max address
       neighbor0 = cit->second;
       cit--;
       neighbor1 = cit->second;
       net.makeShortcutConnection(net.node_map, cache);
+      //cout << neighbor1->getAddress(cache) << ", " << neighbor0->getAddress(cache) << endl; 
     }
-    //remove edge between neighbor0 and neighbor1
+    //remove edge between neighbor0 and neighbor1 if it exists
     Edge* old_edge = net.getEdge(neighbor0,neighbor1);
-    net.remove(old_edge);
+    if (old_edge != 0) {
+      //AddressedNode* no0 = dynamic_cast<AddressedNode*> (old_edge->first);
+      //AddressedNode* no1 = dynamic_cast<AddressedNode*> (old_edge->second);
+      //cout << "old_edge: " << no0->getAddress(cache)
+	//    << " : " << no1->getAddress(cache) << endl;
+      net.remove(old_edge);
+    }
+    //cout << "before edge addition: " << net.getEdgeSize() << endl;
     net.add(Edge(me, neighbor0));
     net.add(Edge(me, neighbor1));
     //make sure ring is closed.
     AddressedNode* front = net.node_map.begin()->second;
     AddressedNode* back = (net.node_map.rbegin())->second;
     net.add(Edge(front,back));
+    //cout << "after edge addition: " << net.getEdgeSize() << endl;
   }
 }
 CacheAction::CacheAction(EventScheduler& sched, Random& r, DeetooNetwork& n, DeetooMessage& msg, StringObject so, AddressedNode* node, double cqsize) : _sched(sched), _r(r), _net(n), _msg(msg), _so(so), _node(node), _cqsize(cqsize)
