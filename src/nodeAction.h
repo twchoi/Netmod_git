@@ -64,31 +64,30 @@ namespace Starsky {
   };
   class CacheAction : public Action {
     public:
-      CacheAction(EventScheduler& sched, Random& r, DeetooNetwork& net, DeetooMessage& msg, StringObject so, AddressedNode* node, double cqsize);
+      CacheAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& net, StringObject so, double sq_alpha);
       void Execute();
     protected:
       EventScheduler& _sched;
       Random& _r;
       DeetooNetwork& _net;
-      DeetooMessage& _msg;
+      INodeSelector& _ns;
       StringObject _so;
-      AddressedNode* _node;
-      double _cqsize;
+      double _sq_alpha;
   };
   class QueryAction : public Action {
     public:
       //bool hit = false;
       int sum_hits;
-      QueryAction(EventScheduler& sched, Random& r, DeetooNetwork& net, DeetooMessage& msg, StringObject so, AddressedNode* node, double cqsize);
+      int no_msgs;
+      QueryAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& net, StringObject so, double sq_alpha);
       void Execute();
     protected:
       EventScheduler& _sched;
       Random& _r;
       DeetooNetwork& _net;
-      DeetooMessage& _msg;
+      INodeSelector& _ns;
       StringObject _so;
-      AddressedNode* _node;
-      double _cqsize;
+      double _sq_alpha;
   };
 }
 #endif

@@ -11,11 +11,11 @@ NodeLeaveAction::NodeLeaveAction(EventScheduler& sched, DeetooNetwork& cn, Deeto
 
 }
 void NodeLeaveAction::Execute() {
-  /**
+  
   cout << "-------------NodeLeaveAction-------------- " 
 	  << _me->getAddress(1) << ", "
 	  << _me->getAddress(0) << endl;
-  */
+  
   //schedule a time to add a new node:
   std::cout << _sched.getCurrentTime() << "\t"
             << _cnet.getNodeSize() << "\t"
@@ -25,10 +25,25 @@ void NodeLeaveAction::Execute() {
             << std::endl;
   my_int caddr = _me->getAddress(1);
   my_int qaddr = _me->getAddress(0);
+  cout << "caddr & qaddr: " << caddr << ", " << qaddr << endl;
+  auto_ptr<NodeIterator> ni (_cnet.getNodeIterator() );
+  while (ni->moveNext() ) { 
+    AddressedNode* c = dynamic_cast<AddressedNode*> (ni->current() );
+    cout << "cur addr: " << c->getAddress(1) << ", " << c->getAddress(0) << endl;
+  }
+  map<my_int, AddressedNode*>::const_iterator mit;
+  for (mit=_cnet.node_map.begin(); mit!=_cnet.node_map.end(); mit++) {
+    cout << "c_addr: " << mit->first << endl;
+  }
+  cout << "---------" << endl;
   _cnet.node_map.erase(_cnet.node_map.find(caddr));
+  cout << "---------" << endl;
   _qnet.node_map.erase(_qnet.node_map.find(qaddr));
+  cout << "---------" << endl;
   _cnet.remove(_me);
+  cout << "---------" << endl;
   _qnet.remove(_me);
+  cout << "---------" << endl;
   //my_int caddr = _me->getAddress(1);
   std::cout << _sched.getCurrentTime() << "\t"
             << _cnet.getNodeSize() << "\t"
@@ -50,7 +65,7 @@ NodeJoinAction::NodeJoinAction(EventScheduler& sched, Random& r, DeetooNetwork& 
 }
 
 void NodeJoinAction::Execute() {
-  //cout << "-------------NodeJoinAction-------------- " << endl;
+  cout << "-------------NodeJoinAction-------------- " << endl;
   my_int c_addr = (my_int)(_r.getDouble01() * WMAX);
   //cout << "c_addr: " << c_addr << endl;
   //std::set<std::string> items;
@@ -152,34 +167,64 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
     //cout << "after edge addition: " << net.getEdgeSize() << endl;
   }
 }
-CacheAction::CacheAction(EventScheduler& sched, Random& r, DeetooNetwork& n, DeetooMessage& msg, StringObject so, AddressedNode* node, double cqsize) : _sched(sched), _r(r), _net(n), _msg(msg), _so(so), _node(node), _cqsize(cqsize)
+//CacheAction::CacheAction(EventScheduler& sched, Random& r, DeetooNetwork* n, StringObject so, double sq_alpha) : _sched(sched), _r(r), _net(n), _so(so),  _sq_alpha(sq_alpha)
+CacheAction::CacheAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& n, StringObject so, double sq_alpha) : _sched(sched), _r(r), _ns(ns), _net(n), _so(so),  _sq_alpha(sq_alpha)
 {
-
 }
 void CacheAction::Execute() {
-  //schedule a time to add a new node:
-  std::pair<my_int, my_int> range = _net.getRange(_cqsize);
-  my_int rg_start = range.first, rg_end = range.second;
-  auto_ptr<DeetooNetwork> tmp_net (_msg.visit(_node, _net));
+  cout << "cacheaction start here" << endl;
+  std::cout << _sched.getCurrentTime() << "\t"
+            << _net.getNodeSize() << "\t"
+            << _net.getEdgeSize() << "\t"
+	    << std::endl;
+  //schedule a time to cache object to nodes in the range:
+  UniformNodeSelector u_node(_r);
+  _ns.selectFrom(&_net);
+  AddressedNode* node = dynamic_cast<AddressedNode*> (_ns.select() );
+  double guess = _net.guessNetSizeLog(node,1);
+  cout << "c_addr: " << node->getAddress(1) << ", sq_alpha: " << _sq_alpha << ", guessNetSize: " << guess << endl;
+  double cqsize = (double) (((WMAX) / (double)sqrt(_net.guessNetSizeLog(node,1) ) ) * _sq_alpha);
+  cout << "cqsize: " << cqsize << endl;
+  std::pair<my_int, my_int> range = _net.getRange(cqsize);
+  my_int rg_start = range.first;
+  my_int rg_end = range.second;
+  cout << "rg_start: "<< rg_start << ", rg_end: " << rg_end << endl;
+  _so.start = rg_start;
+  _so.end = rg_end;
+  auto_ptr<DeetooMessage> cache_m (new DeetooMessage(rg_start, rg_end, true, _r, 0.0) );
+  auto_ptr<DeetooNetwork> tmp_net (cache_m.visit(node, _net));
   auto_ptr<NodeIterator> ni (tmp_net->getNodeIterator() );
   while (ni->moveNext() ) {
     AddressedNode* inNode = dynamic_cast<AddressedNode*> (ni->current() );
     inNode->insertObject(_so);
   }
 }
-QueryAction::QueryAction(EventScheduler& sched, Random& r, DeetooNetwork& n, DeetooMessage& msg, StringObject so, AddressedNode* node, double cqsize) : _sched(sched), _r(r), _net(n), _msg(msg), _so(so), _node(node), _cqsize(cqsize)
+QueryAction::QueryAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& n, StringObject so, double sq_alpha) : _sched(sched), _r(r), _ns(ns), _net(n), _so(so), _sq_alpha(sq_alpha)
 {
 
 }
 void QueryAction::Execute() {
-  //schedule a time to add a new node:
-  std::pair<my_int, my_int> range = _net.getRange(_cqsize);
+  cout << "queryaction start here" << endl;
+  std::cout << _sched.getCurrentTime() << "\t"
+            << _net.getNodeSize() << "\t"
+            << _net.getEdgeSize() << "\t"
+	    << std::endl;
+  //schedule a time to cache object to nodes in the range:
+  UniformNodeSelector u_node(_r);
+  _ns.selectFrom(&_net);
+  AddressedNode* node = dynamic_cast<AddressedNode*> (_ns.select() );
+  double guess = _net.guessNetSizeLog(node,0);
+  cout << "q_addr: " << node->getAddress(0) << ", sq_alpha: " << _sq_alpha << ", guessNetSize: " << guess << endl;
+  //schedule a time to query object to nodes in the range:
+  double cqsize = (double) (((WMAX ) / (double)sqrt(_net.guessNetSizeLog(node,0) ) ) * _sq_alpha);
+  std::pair<my_int, my_int> range = _net.getRange(cqsize);
   my_int rg_start = range.first, rg_end = range.second;
-  auto_ptr<DeetooNetwork> tmp_net (_msg.visit(_node, _net));
+  auto_ptr<DeetooMessage> query_m (new DeetooMessage(rg_start, rg_end,false, _r, 0.0) );
+  auto_ptr<DeetooNetwork> tmp_net (query_m.visit(node, _net));
   sum_hits = 0;
   auto_ptr<NodeIterator> ni (tmp_net->getNodeIterator() );
   while (ni->moveNext() ) {
     AddressedNode* inNode = dynamic_cast<AddressedNode*> (ni->current() );
-    sum_hits = inNode->searchObject(_so);
+    sum_hits += inNode->searchObject(_so);
   } 
 }

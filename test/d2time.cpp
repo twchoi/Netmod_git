@@ -42,10 +42,12 @@ int main(int argc, char *argv[])
 {
   int nodes = atoi(argv[1]);
   double alpha = atof(argv[2]);
+  double sq_alpha = sqrt(alpha);
   Ran1Random ran_no(-1);
   EventScheduler sched;
   double time = 0;
   double interval = 0.5;
+  double p = 0;
   auto_ptr<DeetooNetwork> cacheNet_ptr (new DeetooNetwork(ran_no));
   auto_ptr<DeetooNetwork> queryNet_ptr (new DeetooNetwork(ran_no));
   cacheNet_ptr->createNullNet();
@@ -58,17 +60,40 @@ int main(int argc, char *argv[])
     time += interval;  
   }
   cout << "added nodes" << endl;
-  /**
   int k = 100;
+  //schedule cache actions
   std::set<std::string> items = rstringGenerator(k, 10, ran_no);
   std::set<std::string>::const_iterator item_it;
-  UniformNodeSelector item_src(ran_no);
-  item_src.selectFrom(cachedNet_ptr.get() );
+  //UniformNodeSelector item_src(ran_no);
+  //item_src.selectFrom(cacheNet_ptr.get() );
+  time += 100;   //start cache actions at 100 second after completing network creation.   
+  int i = 0;
   for (item_it = items.begin(); item_it != items.end(); item_it++)
   {
-    
+    cout << "item: " << i << endl;
+    i++;
+    //AddressedNode* item_source = dynamic_cast<AddressedNode*> (item_src.select() );
+    StringObject c_so;
+    c_so.content = *item_it;
+    Action* c_action = new CacheAction(sched, ran_no, cacheNet_ptr.get(), c_so, sq_alpha);
+    sched.at(time, c_action);
+    time += interval;  
   }
-
+  /**
+  //schedule query actions
+  UniformNodeSelector q_start(ran_no);
+  item_src.selectFrom(queryNet_ptr.get() );
+  time += 10;    //start queries at 10 sec after completing cache actions.
+  for (item_it = items.begin(); item_it != items.end(); item_it++)
+  {
+    for (int iter = 0; iter < 100; iter++) {
+      AddressedNode* q_node = dynamic_cast<AddressedNode*> (q_start.select() );
+      StringObject q_so;
+      Action* c_action = new CacheAction(sched, ran_no, *queryNet_ptr.get(), q_so, q_node, sq_alpha);
+      sched.at(time, c_action);
+      time += interval; 
+    } 
+  }
   */
   //Run for 360,000 seconds (100 hours) of simulated time
   Action* stop = new StopAction(sched);

@@ -254,7 +254,7 @@ my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq)
   std::map<my_int, AddressedNode*>::const_iterator upper;
   //cout << "--------------------------------" << endl;
   if (cq) {
-    //log_d = (my_int)(log(node_map.size()) );
+    log_d = (my_int)(log(node_map.size()) );
     upper = node_map.upper_bound(tnode->getAddress(cq) );
     for (int iter = 0; iter < log_d; iter++) {
       if (upper == node_map.end() ) {
@@ -271,7 +271,7 @@ my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq)
       if (upper == query_nm.end() ) {
         upper = query_nm.begin();
       }
-      //cout << upper->first << endl;
+      ////cout << upper->first << endl;
       upper++;
     }
   }
@@ -288,13 +288,10 @@ my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq)
 my_int DeetooNetwork::guessNetSize(AddressedNode* tnode,bool cq)
 {
   std::map<my_int,AddressedNode*> lefters, righters;
-  
-  //int count = 0;
   my_int addr_min = WMAX;
   my_int addr_max = 0;
   my_int this_dist, dist1, dist2;
   my_int this_addr;
-  //cout << "================================================================" << endl;
   //cout << "target Address: " << tnode->getAddress(cq) << endl;
   auto_ptr<NodeIterator> ni(getNeighborIterator(tnode) );
   while (ni->moveNext() ) {
@@ -313,29 +310,8 @@ my_int DeetooNetwork::guessNetSize(AddressedNode* tnode,bool cq)
     else {
 	this_dist = c_node->getDistanceTo(tnode->getAddress(cq), cq);
 	righters.insert( make_pair( this_dist, c_node ) );
-	//righters[this_dist] = c_node;
     }
   }
-
-  //cout << "size of lefter and righter: " << lefters.size() << "\t" << righters.size() << endl;
-  /**
-  if (lefters.begin() == lefters.end() ) {
-	dist1 = righters.begin()->first;
-	std::map<my_int, AddressedNode*>::iterator this_it = righters.end();
-	this_it--;
-	dist2 = this_it->first;
-  }
-  else if (righters.begin() == righters.end() ) {
-	dist1 = lefters.begin()->first;
-	std::map<my_int, AddressedNode*>::iterator this_it = lefters.end();
-	this_it--;
-	dist2 = this_it->first;
-  }
-  else {
-	dist1 = lefters.begin()->first;
-	dist2 = righters.begin()->first;
-  }
-  **/
   // If there are entries in lefters and righters, the first elements in them are direct neighbors.
   if (lefters.size()!=0 && righters.size()!=0) {
     dist1 = lefters.begin()->first;
@@ -349,58 +325,12 @@ my_int DeetooNetwork::guessNetSize(AddressedNode* tnode,bool cq)
   }
   lefters.clear();
   righters.clear();
-
   //cout << "dist1 and dist2: " << dist1 << "\t" << dist2 << endl;
-
-
-
-  /*  
-    this_dist = c_node->getDistanceTo(tnode->getAddress(cq),cq);
-    this_addr = c_node->getAddress(cq);
-    //cout << "this_dist: " << this_dist << endl;
-    distances[this_dist]=c_node;
-    if (this_addr < addr_min) { addr_min = this_addr; }
-    if (this_addr > addr_max) { addr_max = this_addr; }
-  }
-  if (tnode->getAddress(cq) < addr_min || tnode->getAddress(cq) > addr_max ) {
-    dist1 = tnode->getDistanceTo(addr_min, cq);
-    dist2 = tnode->getDistanceTo(addr_max, cq);
-  }
-  else {
-    std::map<my_int,AddressedNode*>::iterator dist_it = distances.begin();
-    // 'distances' is sorted as ascending order. So, first and second
-    dist1 = dist_it->first;
-    do {
-      dist_it++;
-      dist2 = dist_it->first;
-    }
-  }
-  **/
   my_int d_ave = (my_int) ( (double) (dist1 + dist2) / 2.0);
   //cout << "d_ave: " << d_ave << endl;
   my_int d_net = (my_int)( (double) (WMAX / d_ave) + (double) (1 / d_ave) );
   //cout << "d_net: " << d_net << endl;
-  //cout << "====================================================" << endl;
   return d_net;
-  /** 
-  my_int log_d = (my_int)(log(d_net) );
-  cout << "--------------------------------" << endl;
-  std::map<my_int, AddressedNode*>::const_iterator upper = node_map.upper_bound(tnode->getAddress(cq) );
-  for (int iter = 0; iter < log_d; iter++) {
-    if (upper == node_map.end() ) {
-      upper = node_map.begin();
-    }
-    cout << upper->first << endl;
-    upper++;
-  }
-  my_int dist_to = tnode->getDistanceTo(upper->first, cq);
-  cout << dist_to << "\t" << log_d << endl;
-  double temp = (double)(log_d) / (double)(dist_to);
-  //cout << "temp: " << temp << endl;
-  my_int new_est = (my_int)( temp * WMAX);
-  //cout << new_est << endl;
-  return new_est;
-  **/
 }
     
 /*
