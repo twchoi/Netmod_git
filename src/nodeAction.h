@@ -78,7 +78,8 @@ namespace Starsky {
     public:
       //bool hit = false;
       int sum_hits;
-      int no_msgs;
+      int no_msg;
+      int depth;
       QueryAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& net, StringObject so, double sq_alpha);
       void Execute();
     protected:

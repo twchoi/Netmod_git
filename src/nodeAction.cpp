@@ -191,7 +191,8 @@ void CacheAction::Execute() {
   cout << "rg_start: "<< rg_start << ", rg_end: " << rg_end << endl;
   _so.start = rg_start;
   _so.end = rg_end;
-  auto_ptr<DeetooMessage> cache_m (new DeetooMessage(rg_start, rg_end, true, _r, 0.0) );
+  node->insertObject(_so);
+  auto_ptr<DeetooMessage> cache_m(new DeetooMessage(rg_start, rg_edn, true, _r, 0.0) );
   auto_ptr<DeetooNetwork> tmp_net (cache_m.visit(node, _net));
   auto_ptr<NodeIterator> ni (tmp_net->getNodeIterator() );
   while (ni->moveNext() ) {
@@ -204,23 +205,25 @@ QueryAction::QueryAction(EventScheduler& sched, Random& r, INodeSelector& ns, De
 
 }
 void QueryAction::Execute() {
+  //schedule a time to query object to nodes in the range:
   cout << "queryaction start here" << endl;
   std::cout << _sched.getCurrentTime() << "\t"
             << _net.getNodeSize() << "\t"
             << _net.getEdgeSize() << "\t"
 	    << std::endl;
-  //schedule a time to cache object to nodes in the range:
   UniformNodeSelector u_node(_r);
   _ns.selectFrom(&_net);
   AddressedNode* node = dynamic_cast<AddressedNode*> (_ns.select() );
   double guess = _net.guessNetSizeLog(node,0);
   cout << "q_addr: " << node->getAddress(0) << ", sq_alpha: " << _sq_alpha << ", guessNetSize: " << guess << endl;
-  //schedule a time to query object to nodes in the range:
   double cqsize = (double) (((WMAX ) / (double)sqrt(_net.guessNetSizeLog(node,0) ) ) * _sq_alpha);
   std::pair<my_int, my_int> range = _net.getRange(cqsize);
   my_int rg_start = range.first, rg_end = range.second;
   auto_ptr<DeetooMessage> query_m (new DeetooMessage(rg_start, rg_end,false, _r, 0.0) );
   auto_ptr<DeetooNetwork> tmp_net (query_m.visit(node, _net));
+  no_msg = tmp_net->getNodeSize();
+  int q_in_depth = tmp_net->getDistance(query_m->init_node);
+  depth = q_in_depth + query_m->out_edge_count;
   sum_hits = 0;
   auto_ptr<NodeIterator> ni (tmp_net->getNodeIterator() );
   while (ni->moveNext() ) {
