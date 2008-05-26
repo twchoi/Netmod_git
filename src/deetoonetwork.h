@@ -51,8 +51,8 @@ namespace Starsky {
 class DeetooNetwork : public Network {
 
     public:
-	DeetooNetwork(Ran1Random& r);
-        DeetooNetwork(int nodes, Ran1Random& r);
+	DeetooNetwork(Random& r);
+        DeetooNetwork(int nodes, Random& r);
 	/**
 	 *make new empty network
 	 */
@@ -130,7 +130,7 @@ class DeetooNetwork : public Network {
 	void createEvenNet(int net_size);
 	void createNullNet();
     protected:
-	Ran1Random& _r_short;
+	Random& _r_short;
 };
 	
 }

@@ -36,8 +36,8 @@ using namespace std;
   #define WMAX 4294967295L
 #endif
 
-DeetooNetwork::DeetooNetwork(Ran1Random& r) : Network(), _r_short(r) {}
-DeetooNetwork::DeetooNetwork(int nodes, Ran1Random& r) : _r_short(r) {}
+DeetooNetwork::DeetooNetwork(Random& r) : Network(), _r_short(r) {}
+DeetooNetwork::DeetooNetwork(int nodes, Random& r) : _r_short(r) {}
 
 void DeetooNetwork::formRing(const std::map<my_int, AddressedNode*>& nodeMap) {
   AddressedNode* first = nodeMap.begin()->second;

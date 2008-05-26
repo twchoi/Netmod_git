@@ -66,18 +66,22 @@ NodeJoinAction::NodeJoinAction(EventScheduler& sched, Random& r, DeetooNetwork& 
 
 void NodeJoinAction::Execute() {
   cout << "-------------NodeJoinAction-------------- " << endl;
-  my_int c_addr = (my_int)(_r.getDouble01() * WMAX);
+  my_int c_addr;
   //cout << "c_addr: " << c_addr << endl;
   //std::set<std::string> items;
   std::vector<StringObject> items;
   items.clear();
   AddressedNode* me = 0;
-  bool fresh_addr = 0;
+  bool fresh_addr = false;
   while (!fresh_addr) {
+    c_addr = (my_int)(_r.getDouble01() * WMAX);
     if (_cnet.node_map.find(c_addr) == _cnet.node_map.end() && c_addr != 0) {
       me = new AddressedNode(c_addr, items);
       //cout << "in while addr: " << me->getAddress(1) << endl;
-      fresh_addr = 1;
+      fresh_addr = true;
+    }
+    else {
+      fresh_addr = false;
     }
   }
   my_int q_addr = me->getAddress(0);
@@ -193,7 +197,7 @@ void CacheAction::Execute() {
   _so.end = rg_end;
   node->insertObject(_so);
   auto_ptr<DeetooMessage> cache_m(new DeetooMessage(rg_start, rg_edn, true, _r, 0.0) );
-  auto_ptr<DeetooNetwork> tmp_net (cache_m.visit(node, _net));
+  auto_ptr<DeetooNetwork> tmp_net (cache_m->visit(node, _net));
   auto_ptr<NodeIterator> ni (tmp_net->getNodeIterator() );
   while (ni->moveNext() ) {
     AddressedNode* inNode = dynamic_cast<AddressedNode*> (ni->current() );
@@ -220,7 +224,7 @@ void QueryAction::Execute() {
   std::pair<my_int, my_int> range = _net.getRange(cqsize);
   my_int rg_start = range.first, rg_end = range.second;
   auto_ptr<DeetooMessage> query_m (new DeetooMessage(rg_start, rg_end,false, _r, 0.0) );
-  auto_ptr<DeetooNetwork> tmp_net (query_m.visit(node, _net));
+  auto_ptr<DeetooNetwork> tmp_net (query_m->visit(node, _net));
   no_msg = tmp_net->getNodeSize();
   int q_in_depth = tmp_net->getDistance(query_m->init_node);
   depth = q_in_depth + query_m->out_edge_count;
