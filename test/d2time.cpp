@@ -20,7 +20,7 @@ using namespace std;
 #endif
 
 //random string generator
-std::set<std::string> rstringGenerator ( int howmany, int length, Ran1Random& r )
+std::set<std::string> rstringGenerator ( int howmany, int length, Random& r )
 {
     std::set<std::string> items;
     for (int no=0; no < howmany; no++)
@@ -60,41 +60,39 @@ int main(int argc, char *argv[])
     time += interval;  
   }
   cout << "added nodes" << endl;
-  int k = 100;
+  int k = 10;
   //schedule cache actions
   std::set<std::string> items = rstringGenerator(k, 10, ran_no);
   std::set<std::string>::const_iterator item_it;
   //UniformNodeSelector item_src(ran_no);
+  UniformNodeSelector uns(ran_no);
   //item_src.selectFrom(cacheNet_ptr.get() );
   time += 100;   //start cache actions at 100 second after completing network creation.   
   int i = 0;
+  //schedule caching for each item.
   for (item_it = items.begin(); item_it != items.end(); item_it++)
   {
-    cout << "item: " << i << endl;
     i++;
+    cout << "item: " << i << endl;
     //AddressedNode* item_source = dynamic_cast<AddressedNode*> (item_src.select() );
     StringObject c_so;
     c_so.content = *item_it;
-    Action* c_action = new CacheAction(sched, ran_no, cacheNet_ptr.get(), c_so, sq_alpha);
-    sched.at(time, c_action);
-    time += interval;  
-  }
-  /**
-  //schedule query actions
-  UniformNodeSelector q_start(ran_no);
-  item_src.selectFrom(queryNet_ptr.get() );
-  time += 10;    //start queries at 10 sec after completing cache actions.
-  for (item_it = items.begin(); item_it != items.end(); item_it++)
-  {
+    int ctime = time + ran_no.getExp(100.0);  
+    Action* c_action = new CacheAction(sched, ran_no, uns, *cacheNet_ptr.get(), c_so, sq_alpha);
+    sched.at(ctime, c_action);
+    cout << "caching time: " << ctime << endl;
+    //schedule query actions
+    UniformNodeSelector q_start(ran_no);
     for (int iter = 0; iter < 100; iter++) {
-      AddressedNode* q_node = dynamic_cast<AddressedNode*> (q_start.select() );
-      StringObject q_so;
-      Action* c_action = new CacheAction(sched, ran_no, *queryNet_ptr.get(), q_so, q_node, sq_alpha);
+      //AddressedNode* q_node = dynamic_cast<AddressedNode*> (q_start.select() );
+      Action* c_action = new CacheAction(sched, ran_no, q_start, *queryNet_ptr.get(), c_so, sq_alpha);
+      int qtime = ctime + ran_no.getExp(100.0);
+      cout << "querying time: " << time << endl;
       sched.at(time, c_action);
-      time += interval; 
+      //time += interval; 
     } 
   }
-  */
+
   //Run for 360,000 seconds (100 hours) of simulated time
   Action* stop = new StopAction(sched);
   sched.at(360000, stop);

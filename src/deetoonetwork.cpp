@@ -78,6 +78,23 @@ void DeetooNetwork::makeShortcutConnection(const std::map<my_int, AddressedNode*
     }
   }
 }
+AddressedNode* DeetooNetwork::returnShortcutNode(AddressedNode* node, const std::map<my_int, AddressedNode*>& nd_map, bool cache) {
+  AddressedNode* nodej;
+    my_int shortcut_address = node->getAddress(cache);
+    while (shortcut_address == node->getAddress(cache) ) {
+        double x = _r_short.getDouble01();
+	//my_int net_size = guessNetSize(node, cache);
+	my_int net_size = node_map.size();
+	//int net_size = getNodeSize();
+        my_int k = (my_int) (pow(10,(log10(WMAX)-(1-x)*log10(net_size ) ) ) );
+        my_int shortcut_target_addr = (node->getAddress(cache) + k) % (WMAX );
+	nodej = findShortcutNode(nd_map, shortcut_target_addr);   
+	cout << "addr: " << node->getAddress(cache) << ", " << "sc_addr: " << nodej->getAddress(cache) << endl;
+	shortcut_address = nodej->getAddress(cache);
+    }
+  
+  return nodej;
+}
 
 void DeetooNetwork::create(int n) {
     //Let's make n different nodes!!

@@ -86,6 +86,12 @@ class DeetooNetwork : public Network {
 	void makeShortcutConnection(const std::map<my_int, AddressedNode*>& nd_map,
                                     bool cache);
 	/**
+	 *@param cache if cache net, true, else if query net, false
+	 *make shortcut connection 
+	 */
+	AddressedNode* returnShortcutNode(AddressedNode* node, const std::map<my_int, AddressedNode*>& nd_map,
+                                    bool cache);
+	/**
 	 * @param n_map node map
 	 * @param t_addr calculated target address for shortcut
 	 * return the closest neighbor node to the t_addr

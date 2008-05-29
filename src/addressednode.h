@@ -92,7 +92,7 @@ namespace Starsky {
        * return to the pointer to the object being contained.
        */
       std::set<std::string> getItem() const { return _itemSet; }
-      std::vector<StringObject> getObject() const { return _objSet; }
+      std::vector<StringObject> getObject() { return _objSet; }
       /**
        * return true if this node has qItem.
        */
