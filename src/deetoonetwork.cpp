@@ -89,7 +89,7 @@ AddressedNode* DeetooNetwork::returnShortcutNode(AddressedNode* node, const std:
         my_int k = (my_int) (pow(10,(log10(WMAX)-(1-x)*log10(net_size ) ) ) );
         my_int shortcut_target_addr = (node->getAddress(cache) + k) % (WMAX );
 	nodej = findShortcutNode(nd_map, shortcut_target_addr);   
-	cout << "addr: " << node->getAddress(cache) << ", " << "sc_addr: " << nodej->getAddress(cache) << endl;
+	//cout << "addr: " << node->getAddress(cache) << ", " << "sc_addr: " << nodej->getAddress(cache) << endl;
 	shortcut_address = nodej->getAddress(cache);
     }
   

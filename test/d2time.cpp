@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
   for (item_it = items.begin(); item_it != items.end(); item_it++)
   {
     i++;
-    cout << "item: " << i << endl;
+    cout << "item: " << *item_it << endl;
     //AddressedNode* item_source = dynamic_cast<AddressedNode*> (item_src.select() );
     StringObject c_so;
     c_so.content = *item_it;
@@ -83,14 +83,16 @@ int main(int argc, char *argv[])
     cout << "caching time: " << ctime << endl;
     //schedule query actions
     UniformNodeSelector q_start(ran_no);
-    for (int iter = 0; iter < 100; iter++) {
+    for (int iter = 0; iter < 5; iter++) {
       //AddressedNode* q_node = dynamic_cast<AddressedNode*> (q_start.select() );
-      Action* c_action = new CacheAction(sched, ran_no, q_start, *queryNet_ptr.get(), c_so, sq_alpha);
-      int qtime = ctime + ran_no.getExp(100.0);
-      cout << "querying time: " << time << endl;
-      sched.at(time, c_action);
+      Action* q_action = new QueryAction(sched, ran_no, q_start, *queryNet_ptr.get(), c_so, sq_alpha);
+      int qtime = ctime + ran_no.getExp(3600.0);
+      cout << "querying time: " << qtime << endl;
+      sched.at(qtime, q_action);
+      ctime = qtime;
       //time += interval; 
     } 
+    time = ctime;
   }
 
   //Run for 360,000 seconds (100 hours) of simulated time

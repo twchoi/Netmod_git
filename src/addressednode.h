@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "node.h"
 #include <set>
+#include <iostream>
 #include <vector>
 #include "dataobject.h"
 //#define INT64
@@ -34,11 +35,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
   typedef unsigned long my_int;
 #endif
 namespace Starsky {
-
+  /**
+   * content: string
+   * start: start address of range
+   * end: end address of range
+   * owner: node which inserted this object into the network
+   */
   struct StringObject {
     std::string content;
     my_int start;
     my_int end;
+    //compare only contents
+    bool operator< (const StringObject& so1) const {
+      return (content < so1.content );	    
+    }
+    bool operator== (const StringObject& so1) const {
+      return (content == so1.content );
+    }
     //AddressedNode* owner;
   };
 
@@ -48,16 +61,12 @@ namespace Starsky {
   //template<typename T>
   class AddressedNode : public Node {
     protected:
-      /**
-       * address for cache
-       */
+      // address for cache
       my_int _c_address;
-      /**
-       * address for query 
-       */
+      // address for query 
       my_int _q_address;
       std::set<std::string> _itemSet;
-      std::vector<StringObject> _objSet;
+      std::set<StringObject> _objSet;
       //bool _own;
       my_int _dist;
       my_int _small;
@@ -75,8 +84,8 @@ namespace Starsky {
        * @param own if true, delete the item when we are deleted
        */
       AddressedNode(const my_int addr, std::set<std::string> itemSet) ;
-      AddressedNode(const my_int addr, std::vector<StringObject> objSet) ;
-      ~AddressedNode() {_itemSet.clear(); }
+      AddressedNode(const my_int addr, std::set<StringObject> objSet) ;
+      ~AddressedNode() {_itemSet.clear(); _objSet.clear(); }
       
       /**
        * @param cache true if cache, else query
@@ -92,16 +101,23 @@ namespace Starsky {
        * return to the pointer to the object being contained.
        */
       std::set<std::string> getItem() const { return _itemSet; }
-      std::vector<StringObject> getObject() { return _objSet; }
+      std::set<StringObject> getObject() const { return _objSet; }
+      //std::vector<StringObject> getObject() const { return _objSet; }
       /**
        * return true if this node has qItem.
        */
       bool searchItem( std::string qItem);
+      /**
+       * return true if this node has qObj.
+       */
       bool searchObject( StringObject qObj);
       /**
        * @param item, insert item to a node
        */
       void insertItem(std::string item);
+      /**
+       * @param item, insert obj to a node
+       */
       void insertObject(StringObject obj);
       /**
        * @param item delete this item from a node

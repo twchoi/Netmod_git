@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addressednode.h"
 
 using namespace Starsky;
+using namespace std;
 //#define INT64
 #ifdef INT64
   typedef unsigned long long my_int;
@@ -49,7 +50,7 @@ AddressedNode::AddressedNode(const my_int addr, std::set<std::string> itemSet)
   _itemSet = itemSet;
 }
 
-AddressedNode::AddressedNode(const my_int addr, std::vector<StringObject> objSet)
+AddressedNode::AddressedNode(const my_int addr, std::set<StringObject> objSet)
 {
   _c_address = addr;
   addr_j = addr % AMAX;
@@ -71,6 +72,7 @@ my_int AddressedNode::getDistanceTo(my_int t_addr, bool cache)
   else { this_addr = _q_address;}
   _small = std::min (this_addr, t_addr);
   _big = std::max (this_addr, t_addr);
+  //ring distance
   _dist = std::min ((_big-_small), ( WMAX - _big + _small +1));
   return _dist;
 }
@@ -78,30 +80,33 @@ my_int AddressedNode::getDistanceTo(my_int t_addr, bool cache)
 bool AddressedNode::searchItem(std::string qItem)
 {
   if (_itemSet.find(qItem) != _itemSet.end() ) {
-	  return true;
+    return true;
   }
   else {
-	  return false;
+    return false;
   }
 }
 bool AddressedNode::searchObject(StringObject qObj)
 {
   
-  bool ret = false;	
-  std::vector<StringObject>::const_iterator sit;
-  for (sit == _objSet.begin(); sit != _objSet.end(); sit++) {
-    if (sit->content == qObj.content ) {
-      ret = true;
+  bool ret;	
+  //cout << "qObj: " << qObj.content << endl;
+  //cout << "_objSet.size() : " << _objSet.size() << endl;
+  std::set<StringObject>::const_iterator sit;
+  if (sit == _objSet.end() ) {
+    ret = false;
+  }
+  else {
+    for (sit = _objSet.begin(); sit != _objSet.end(); sit++) {
+      StringObject ob = *sit;
+      if (ob.content == qObj.content ) {
+        ret = true;
+      }
+      else { ret = false; }
+      cout << endl; 
     }
   }
   return ret;
-  /**
-  if (_objSet.find(qObj) != _objSet.end() ) {
-    return true;
-  }
-  else {
-    return false;
-  }*/
 }
 void AddressedNode::insertItem(std::string item)
 {
@@ -110,8 +115,7 @@ void AddressedNode::insertItem(std::string item)
 
 void AddressedNode::insertObject(StringObject obj)
 {
-    //_objSet.insert(obj);
-    _objSet.push_back(obj);
+    _objSet.insert(obj);
 }
 
 void AddressedNode::deleteItem(std::string item)
@@ -122,6 +126,7 @@ void AddressedNode::deleteItem(std::string item)
 void AddressedNode::deleteObject(StringObject obj)
 {
   //erase() need iterator 
-    _objSet.erase(obj);
+  std::set<StringObject>::iterator it = _objSet.find(obj);
+  _objSet.erase(it);
 }
 */

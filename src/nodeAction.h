@@ -38,9 +38,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 namespace Starsky {
-	
+  // action for node leaves
   class NodeLeaveAction : public Action {
-
     public:
       NodeLeaveAction(EventScheduler& sched, DeetooNetwork& cn, DeetooNetwork& qn, AddressedNode* me); 
       void Execute();
@@ -50,18 +49,33 @@ namespace Starsky {
       DeetooNetwork& _qnet;
       AddressedNode* _me;
   };
+
+  // action for node joins 
   class NodeJoinAction : public Action {
-    
     public:
       NodeJoinAction(EventScheduler& sched, Random& r, DeetooNetwork& cn, DeetooNetwork& qn);
       void Execute();
+      /**
+       * make connections to 2 direct neighbors and 1 shortcut neighbor.
+       * @param net network which a node joins
+       * @param me joining node
+       * @param cache determine if this network is for cache or for query.
+       */
       void getConnection(DeetooNetwork& net, AddressedNode* me, bool cache);
+      /**
+       * copy objects from neighbors
+       * @param me joing node
+       * @param nei neighbor node
+       */
+      void copyObjects(AddressedNode* me, AddressedNode* nei);
     protected:
       EventScheduler& _sched;
       Random& _r;
       DeetooNetwork& _cnet;
       DeetooNetwork& _qnet;
   };
+
+  // action for caching objects in the network
   class CacheAction : public Action {
     public:
       CacheAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& net, StringObject so, double sq_alpha);
@@ -74,6 +88,7 @@ namespace Starsky {
       StringObject _so;
       double _sq_alpha;
   };
+  // action for querying objects
   class QueryAction : public Action {
     public:
       //bool hit = false;
