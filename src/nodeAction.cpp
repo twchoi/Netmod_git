@@ -2,6 +2,15 @@
 #include "nodeAction.h"
 #include "netmodeler.h"
 #define FOREACH(it,col) for(it=col.begin();it != col.end();it++)
+#ifdef INT64
+  typedef unsigned long long my_int;
+  #define WMAX 18446744073709551615LL
+  #define AMAX 4294967296LL
+#else
+  typedef unsigned long my_int;
+  #define AMAX 65536L
+  #define WMAX 4294967295L
+#endif
 using namespace Starsky;
 using namespace std;
 
@@ -72,7 +81,7 @@ void NodeLeaveAction::Execute() {
   
   _cnet.add(Edge(c_left, c_right));
   _qnet.add(Edge(q_left, q_right));
-
+  /**
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "Node_Leave\t"
             << _cnet.getNodeSize() << "\t"
@@ -80,6 +89,7 @@ void NodeLeaveAction::Execute() {
 	    << _qnet.getNodeSize() << "\t"
 	    << _qnet.getEdgeSize() 
             << std::endl;
+	    */
 }
 
 
@@ -135,6 +145,7 @@ void NodeJoinAction::Execute() {
   Action* rejoin = new NodeJoinAction(_sched, _r, _cnet, _qnet);
   _sched.after(lifetime + sleeptime, rejoin);
   //Print out results:
+  /*
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "Node_Join\t" 
             << _cnet.getNodeSize() << "\t"
@@ -142,12 +153,20 @@ void NodeJoinAction::Execute() {
             << _qnet.getNodeSize() << "\t"
             << _qnet.getEdgeSize() 
 	    << std::endl;
+  */
 }
-void NodeJoinAction::copyObjects(AddressedNode* me, AddressedNode* nei) {
+void NodeJoinAction::copyObjects(AddressedNode* me, AddressedNode* nei, bool cache) {
     set<StringObject> so = nei->getObject();
     set<StringObject>::iterator so_it;
     for (so_it = so.begin(); so_it != so.end(); so_it++) {
-      me->insertObject(*so_it);
+      my_int adr = me->getAddress(cache);
+      //cout << "adr: " << adr << "\tstart: " << so_it->start << "\tend: " << so_it->end << endl;
+      if (adr >= so_it->start && adr <= so_it->end) {
+	//cout << "yes, insert!!!" << endl;
+        me->insertObject(*so_it);
+      }
+      else { // this node is out of range of object. do not cache it 
+      }
     }
 }
 void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool cache)
@@ -200,10 +219,10 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
     }
     AddressedNode* shortcut = net.returnShortcutNode(me, net.node_map,true);
     //cout << "before edge addition: " << net.getEdgeSize() << endl;
-    set<AddressedNode*> neis;
-    neis.insert(neighbor0);
-    neis.insert(neighbor1);
-    neis.insert(shortcut);
+    //set<AddressedNode*> neis;
+    //neis.insert(neighbor0);
+    //neis.insert(neighbor1);
+    //neis.insert(shortcut);
     //net.makeShortcutConnection(net.node_map, true);
     if(!(net.getEdge(me, neighbor0)) && !(net.getEdge(neighbor0, me))) {
       net.add(Edge(me, neighbor0));
@@ -214,9 +233,9 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
     if(!(net.getEdge(me, shortcut)) && !(net.getEdge(shortcut, me))) {
       net.add(Edge(me, shortcut));
     }
-    copyObjects(me,neighbor0);
-    copyObjects(me,neighbor1);
-    copyObjects(me,shortcut);
+    copyObjects(me,neighbor0,cache);
+    copyObjects(me,neighbor1,cache);
+    copyObjects(me,shortcut,cache);
 
     //make sure ring is closed.
     AddressedNode* front = net.node_map.begin()->second;
@@ -238,12 +257,12 @@ void CacheAction::Execute() {
   //double guess = _net.guessNetSizeLog(node,1);
   double guess = _net.getNodeSize();
   //cout << "c_addr: " << node->getAddress(1) << ", sq_alpha: " << _sq_alpha << ", guessNetSize: " << guess << endl;
-  double cqsize = (double) (((WMAX) / (double)sqrt(guess ) ) * _sq_alpha);
-  //cout << "cqsize: " << cqsize << endl;
+  double cqsize = (double) (((AMAX) / (double)sqrt(guess ) ) * _sq_alpha);
+  //cout << "cache::cqsize: " << cqsize << "\t addr: " << node->getAddress(1) << endl;
   std::pair<my_int, my_int> range = _net.getRange(cqsize);
   my_int rg_start = range.first;
   my_int rg_end = range.second;
-  //cout << "rg_start: "<< rg_start << ", rg_end: " << rg_end << endl;
+  //cout << "rg_start: "<< rg_start << ", rg_end: " << rg_end << ", diff: " << rg_end-rg_start << endl;
   _so.start = rg_start;
   _so.end = rg_end;
   //node->insertObject(_so);
@@ -258,6 +277,7 @@ void CacheAction::Execute() {
     inNode->insertObject(_so);
     //cout << "size after insertion: " << (inNode->getObject()).size() << endl;
   }
+  /**
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "caching\t"
             << _net.getNodeSize() << "\t"
@@ -265,6 +285,7 @@ void CacheAction::Execute() {
 	    << tmp_net->getNodeSize() << "\t"
 	    << tmp_net->getDistance(cache_m->init_node) << "\t"
 	    << std::endl;
+  */
 }
 QueryAction::QueryAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& n, StringObject so, double sq_alpha) : _sched(sched), _r(r), _ns(ns), _net(n), _so(so), _sq_alpha(sq_alpha)
 {
@@ -281,9 +302,12 @@ void QueryAction::Execute() {
   double guess = _net.getNodeSize();
   //cout << "q_addr: " << node->getAddress(0) << ", sq_alpha: " << _sq_alpha << ", guessNetSize: " << guess << endl;
   //double cqsize = (double) (((WMAX ) / (double)sqrt(_net.guessNetSizeLog(node,0) ) ) * _sq_alpha);
-  double cqsize = (double) (((WMAX ) / (double)sqrt(guess ) ) * _sq_alpha);
+  double cqsize = (double) (((AMAX ) / (double)sqrt(guess ) ) * _sq_alpha);
+  //cout << "query::cqsize: " << cqsize << "\t addr: " << node->getAddress(0) << endl;
   std::pair<my_int, my_int> range = _net.getRange(cqsize);
   my_int rg_start = range.first, rg_end = range.second;
+  //cout << "rg_start: "<< rg_start << ", rg_end: " << rg_end << ", diff: " << rg_end-rg_start << endl;
+
   auto_ptr<DeetooMessage> query_m (new DeetooMessage(rg_start, rg_end,false, _r, 0.0) );
   auto_ptr<DeetooNetwork> tmp_net (query_m->visit(node, _net));
   no_msg = tmp_net->getNodeSize();
@@ -298,14 +322,15 @@ void QueryAction::Execute() {
     //else { cout << "not null" << endl; }
     //cout << "# objects: " << inNode->getObject().size() << endl;
     sum_hits += inNode->searchObject(_so);
-    //cout << "---------------------here 2 ??????" << endl;
   } 
+  double hit_rate = (double)sum_hits / (double)no_msg;
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "querying\t"
             << _net.getNodeSize() << "\t"
             << _net.getEdgeSize() << "\t"
 	    << sum_hits << "\t"
 	    << no_msg << "\t"
+	    << hit_rate << "\t"
 	    << q_in_depth << "\t"
             << depth << "\t"
 	    << std::endl;

@@ -67,7 +67,7 @@ namespace Starsky {
        * @param me joing node
        * @param nei neighbor node
        */
-      void copyObjects(AddressedNode* me, AddressedNode* nei);
+      void copyObjects(AddressedNode* me, AddressedNode* nei, bool cache);
     protected:
       EventScheduler& _sched;
       Random& _r;

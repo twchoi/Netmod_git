@@ -89,21 +89,17 @@ bool AddressedNode::searchItem(std::string qItem)
 bool AddressedNode::searchObject(StringObject qObj)
 {
   
-  bool ret;	
+  bool ret=false;	
   //cout << "qObj: " << qObj.content << endl;
   //cout << "_objSet.size() : " << _objSet.size() << endl;
-  std::set<StringObject>::const_iterator sit;
-  if (sit == _objSet.end() ) {
-    ret = false;
-  }
-  else {
+  if (_objSet.size() != 0) { 
+    std::set<StringObject>::const_iterator sit;
     for (sit = _objSet.begin(); sit != _objSet.end(); sit++) {
       StringObject ob = *sit;
       if (ob.content == qObj.content ) {
         ret = true;
       }
       else { ret = false; }
-      cout << endl; 
     }
   }
   return ret;

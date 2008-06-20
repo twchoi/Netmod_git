@@ -14,11 +14,12 @@ using namespace std;
 #ifdef INT64
   typedef unsigned long long my_int;
   #define ADDR_MAX 4294967296LL
+  #define WMAX 18446744073709551615LL
 #else
   typedef unsigned long my_int;
   #define ADDR_MAX 65536L
+  #define WMAX 4294967295L
 #endif
-
 //random string generator
 std::set<std::string> rstringGenerator ( int howmany, int length, Random& r )
 {
@@ -60,7 +61,7 @@ int main(int argc, char *argv[])
     time += interval;  
   }
   cout << "added nodes" << endl;
-  int k = 10;
+  int k = 10; //number of items inserted into network.
   //schedule cache actions
   std::set<std::string> items = rstringGenerator(k, 10, ran_no);
   std::set<std::string>::const_iterator item_it;
@@ -68,11 +69,9 @@ int main(int argc, char *argv[])
   UniformNodeSelector uns(ran_no);
   //item_src.selectFrom(cacheNet_ptr.get() );
   time += 100;   //start cache actions at 100 second after completing network creation.   
-  int i = 0;
   //schedule caching for each item.
   for (item_it = items.begin(); item_it != items.end(); item_it++)
   {
-    i++;
     cout << "item: " << *item_it << endl;
     //AddressedNode* item_source = dynamic_cast<AddressedNode*> (item_src.select() );
     StringObject c_so;
@@ -80,14 +79,14 @@ int main(int argc, char *argv[])
     int ctime = time + ran_no.getExp(100.0);  
     Action* c_action = new CacheAction(sched, ran_no, uns, *cacheNet_ptr.get(), c_so, sq_alpha);
     sched.at(ctime, c_action);
-    cout << "caching time: " << ctime << endl;
+    cout << "cache time: " << ctime << endl;
     //schedule query actions
     UniformNodeSelector q_start(ran_no);
-    for (int iter = 0; iter < 5; iter++) {
+    for (int iter = 0; iter < 10; iter++) {
       //AddressedNode* q_node = dynamic_cast<AddressedNode*> (q_start.select() );
       Action* q_action = new QueryAction(sched, ran_no, q_start, *queryNet_ptr.get(), c_so, sq_alpha);
       int qtime = ctime + ran_no.getExp(3600.0);
-      cout << "querying time: " << qtime << endl;
+      cout << "query time: " << qtime << endl;
       sched.at(qtime, q_action);
       ctime = qtime;
       //time += interval; 
