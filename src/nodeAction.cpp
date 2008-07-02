@@ -11,6 +11,7 @@
   #define AMAX 65536L
   #define WMAX 4294967295L
 #endif
+//#define DEBUG
 using namespace Starsky;
 using namespace std;
 
@@ -81,7 +82,7 @@ void NodeLeaveAction::Execute() {
   
   _cnet.add(Edge(c_left, c_right));
   _qnet.add(Edge(q_left, q_right));
-  /**
+#ifdef DEBUG
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "Node_Leave\t"
             << _cnet.getNodeSize() << "\t"
@@ -89,7 +90,7 @@ void NodeLeaveAction::Execute() {
 	    << _qnet.getNodeSize() << "\t"
 	    << _qnet.getEdgeSize() 
             << std::endl;
-	    */
+#endif
 }
 
 
@@ -145,29 +146,33 @@ void NodeJoinAction::Execute() {
   Action* rejoin = new NodeJoinAction(_sched, _r, _cnet, _qnet);
   _sched.after(lifetime + sleeptime, rejoin);
   //Print out results:
-  /*
+//#ifdef DEBUG
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "Node_Join\t" 
             << _cnet.getNodeSize() << "\t"
             << _cnet.getEdgeSize() << "\t"
             << _qnet.getNodeSize() << "\t"
-            << _qnet.getEdgeSize() 
+            << _qnet.getEdgeSize() << "\t"
+	    << stabilization_msgs 
 	    << std::endl;
-  */
+//#endif
 }
-void NodeJoinAction::copyObjects(AddressedNode* me, AddressedNode* nei, bool cache) {
+int NodeJoinAction::copyObjects(AddressedNode* me, AddressedNode* nei, bool cache) {
     set<StringObject> so = nei->getObject();
     set<StringObject>::iterator so_it;
+    int stab_cost = 0; //stabilization cost: count how many objects are copied.
     for (so_it = so.begin(); so_it != so.end(); so_it++) {
       my_int adr = me->getAddress(cache);
       //cout << "adr: " << adr << "\tstart: " << so_it->start << "\tend: " << so_it->end << endl;
       if (adr >= so_it->start && adr <= so_it->end) {
 	//cout << "yes, insert!!!" << endl;
         me->insertObject(*so_it);
+	stab_cost++;
       }
       else { // this node is out of range of object. do not cache it 
       }
     }
+    return stab_cost;
 }
 void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool cache)
 {
@@ -233,9 +238,10 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
     if(!(net.getEdge(me, shortcut)) && !(net.getEdge(shortcut, me))) {
       net.add(Edge(me, shortcut));
     }
-    copyObjects(me,neighbor0,cache);
-    copyObjects(me,neighbor1,cache);
-    copyObjects(me,shortcut,cache);
+    int cost0 = copyObjects(me,neighbor0,cache);
+    int cost1 = copyObjects(me,neighbor1,cache);
+    int cost2 = copyObjects(me,shortcut,cache);
+    stabilization_msgs = cost0 + cost1 + cost2;
 
     //make sure ring is closed.
     AddressedNode* front = net.node_map.begin()->second;
@@ -254,8 +260,8 @@ void CacheAction::Execute() {
   //schedule a time to cache object to nodes in the range:
   _ns.selectFrom(&_net);
   AddressedNode* node = dynamic_cast<AddressedNode*> (_ns.select() );
-  //double guess = _net.guessNetSizeLog(node,1);
-  double guess = _net.getNodeSize();
+  double guess = _net.guessNetSizeLog(node,1);
+  //double guess = _net.getNodeSize();
   //cout << "c_addr: " << node->getAddress(1) << ", sq_alpha: " << _sq_alpha << ", guessNetSize: " << guess << endl;
   double cqsize = (double) (((AMAX) / (double)sqrt(guess ) ) * _sq_alpha);
   //cout << "cache::cqsize: " << cqsize << "\t addr: " << node->getAddress(1) << endl;
@@ -277,7 +283,7 @@ void CacheAction::Execute() {
     inNode->insertObject(_so);
     //cout << "size after insertion: " << (inNode->getObject()).size() << endl;
   }
-  /**
+#ifdef DEBUG
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "caching\t"
             << _net.getNodeSize() << "\t"
@@ -285,7 +291,7 @@ void CacheAction::Execute() {
 	    << tmp_net->getNodeSize() << "\t"
 	    << tmp_net->getDistance(cache_m->init_node) << "\t"
 	    << std::endl;
-  */
+#endif
 }
 QueryAction::QueryAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& n, StringObject so, double sq_alpha) : _sched(sched), _r(r), _ns(ns), _net(n), _so(so), _sq_alpha(sq_alpha)
 {
@@ -298,8 +304,8 @@ void QueryAction::Execute() {
   UniformNodeSelector u_node(_r);
   _ns.selectFrom(&_net);
   AddressedNode* node = dynamic_cast<AddressedNode*> (_ns.select() );
-  //double guess = _net.guessNetSizeLog(node,0);
-  double guess = _net.getNodeSize();
+  double guess = _net.guessNetSizeLog(node,1);
+  //double guess = _net.getNodeSize();
   //cout << "q_addr: " << node->getAddress(0) << ", sq_alpha: " << _sq_alpha << ", guessNetSize: " << guess << endl;
   //double cqsize = (double) (((WMAX ) / (double)sqrt(_net.guessNetSizeLog(node,0) ) ) * _sq_alpha);
   double cqsize = (double) (((AMAX ) / (double)sqrt(guess ) ) * _sq_alpha);

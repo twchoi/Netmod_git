@@ -67,6 +67,7 @@ void DeetooNetwork::makeShortcutConnection(const std::map<my_int, AddressedNode*
     while (shortcut_address == nodei->getAddress(cache) ) {
         double x = _r_short.getDouble01();
 	my_int net_size = guessNetSize(nodei, cache);
+	//my_int net_size = guessNetSizeLog(nodei, cache);
 	//int net_size = getNodeSize();
         my_int k = (my_int) (pow(10,(log10(WMAX)-(1-x)*log10(net_size ) ) ) );
         my_int shortcut_target_addr = (nodei->getAddress(cache) + k) % (WMAX );
@@ -83,7 +84,7 @@ AddressedNode* DeetooNetwork::returnShortcutNode(AddressedNode* node, const std:
     my_int shortcut_address = node->getAddress(cache);
     while (shortcut_address == node->getAddress(cache) ) {
         double x = _r_short.getDouble01();
-	//my_int net_size = guessNetSize(node, cache);
+	//my_int net_size = guessNetSizeLog(node, cache);
 	my_int net_size = node_map.size();
 	//int net_size = getNodeSize();
         my_int k = (my_int) (pow(10,(log10(WMAX)-(1-x)*log10(net_size ) ) ) );

@@ -66,8 +66,10 @@ namespace Starsky {
        * copy objects from neighbors
        * @param me joing node
        * @param nei neighbor node
+       * @return returns number of copied objects
        */
-      void copyObjects(AddressedNode* me, AddressedNode* nei, bool cache);
+      int copyObjects(AddressedNode* me, AddressedNode* nei, bool cache);
+      int stabilization_msgs;
     protected:
       EventScheduler& _sched;
       Random& _r;
