@@ -53,7 +53,7 @@ namespace Starsky {
   // action for node joins 
   class NodeJoinAction : public Action {
     public:
-      NodeJoinAction(EventScheduler& sched, Random& r, DeetooNetwork& cn, DeetooNetwork& qn);
+      NodeJoinAction(EventScheduler& sched, Random& r, DeetooNetwork& cn, DeetooNetwork& qn, double sq_alpha);
       void Execute();
       /**
        * make connections to 2 direct neighbors and 1 shortcut neighbor.
@@ -75,19 +75,20 @@ namespace Starsky {
       Random& _r;
       DeetooNetwork& _cnet;
       DeetooNetwork& _qnet;
+      double _sq_alpha;
   };
 
   // action for caching objects in the network
   class CacheAction : public Action {
     public:
-      CacheAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& net, StringObject so, double sq_alpha);
+      CacheAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& net, string& so, double sq_alpha);
       void Execute();
     protected:
       EventScheduler& _sched;
       Random& _r;
       DeetooNetwork& _net;
       INodeSelector& _ns;
-      StringObject _so;
+      string _so;
       double _sq_alpha;
   };
   // action for querying objects
@@ -97,14 +98,14 @@ namespace Starsky {
       int sum_hits;
       int no_msg;
       int depth;
-      QueryAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& net, StringObject so, double sq_alpha);
+      QueryAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& net, string so, double sq_alpha);
       void Execute();
     protected:
       EventScheduler& _sched;
       Random& _r;
       DeetooNetwork& _net;
       INodeSelector& _ns;
-      StringObject _so;
+      string _so;
       double _sq_alpha;
   };
 }

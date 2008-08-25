@@ -66,9 +66,9 @@ void DeetooNetwork::makeShortcutConnection(const std::map<my_int, AddressedNode*
     my_int shortcut_address = nodei->getAddress(cache);
     while (shortcut_address == nodei->getAddress(cache) ) {
         double x = _r_short.getDouble01();
-	my_int net_size = guessNetSize(nodei, cache);
+	//my_int net_size = guessNetSize(nodei, cache);
 	//my_int net_size = guessNetSizeLog(nodei, cache);
-	//int net_size = getNodeSize();
+	int net_size = getNodeSize();
         my_int k = (my_int) (pow(10,(log10(WMAX)-(1-x)*log10(net_size ) ) ) );
         my_int shortcut_target_addr = (nodei->getAddress(cache) + k) % (WMAX );
 	AddressedNode* nodej = findShortcutNode(nd_map, shortcut_target_addr);
@@ -271,8 +271,8 @@ my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq)
   //cout << "nd_map size: " << node_map.size() << "\tquery_nm size: " << query_nm.size() << endl;
   std::map<my_int, AddressedNode*>::const_iterator upper;
   //cout << "--------------------------------" << endl;
-  if (cq) {
-    log_d = (my_int)(log(node_map.size()) );
+  //if (cq) {
+    //log_d = (my_int)(log(node_map.size()) );
     upper = node_map.upper_bound(tnode->getAddress(cq) );
     for (int iter = 0; iter < log_d; iter++) {
       if (upper == node_map.end() ) {
@@ -281,7 +281,8 @@ my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq)
       //cout << upper->first << endl;
       upper++;
     }
-  }
+  //}
+  /*
   else {
     //log_d = (my_int)(log(query_nm.size()) );
     upper = query_nm.upper_bound(tnode->getAddress(cq) );
@@ -293,6 +294,7 @@ my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq)
       upper++;
     }
   }
+  */
 
   my_int dist_to = tnode->getDistanceTo(upper->first, cq);
   //cout << dist_to << "\t" << log_d << endl;
@@ -310,45 +312,51 @@ my_int DeetooNetwork::guessNetSize(AddressedNode* tnode,bool cq)
   my_int addr_max = 0;
   my_int this_dist, dist1, dist2;
   my_int this_addr;
-  //cout << "target Address: " << tnode->getAddress(cq) << endl;
-  auto_ptr<NodeIterator> ni(getNeighborIterator(tnode) );
-  while (ni->moveNext() ) {
-    AddressedNode* c_node = dynamic_cast<AddressedNode*> (ni->current() );
-    this_addr = c_node->getAddress(cq);
-    if (this_addr < addr_min) { addr_min = this_addr; } //left most neighbor
-    if (this_addr > addr_max) { addr_max = this_addr; } //right modst neighbor
-    //cout << "current Address: " << c_node->getAddress(cq) << "\tc_dist: " << c_node->getDistanceTo(tnode->getAddress(cq), cq)<< endl;
-    // left neighbors
-    if (c_node->getAddress(cq) < tnode->getAddress(cq) ) {
-	this_dist = c_node->getDistanceTo(tnode->getAddress(cq), cq);
-	lefters.insert( make_pair( this_dist, c_node ) );
-	//lefters[this_dist] = c_node;
-    }
-    // right neighbors
-    else {
-	this_dist = c_node->getDistanceTo(tnode->getAddress(cq), cq);
-	righters.insert( make_pair( this_dist, c_node ) );
-    }
+  my_int cur_size = node_map.size();
+  if (cur_size < 10) {
+    return cur_size;
   }
-  // If there are entries in lefters and righters, the first elements in them are direct neighbors.
-  if (lefters.size()!=0 && righters.size()!=0) {
-    dist1 = lefters.begin()->first;
-    dist2 = righters.begin()->first;
-  }
-  // else, target node is the most right node or the most left node,
-  // so, min_addr and max_addr nodes are the direct neighbors
   else {
-    dist1 = tnode->getDistanceTo(addr_min, cq);
-    dist2 = tnode->getDistanceTo(addr_max, cq);
+    //cout << "target Address: " << tnode->getAddress(cq) << endl;
+    auto_ptr<NodeIterator> ni(getNeighborIterator(tnode) );
+    while (ni->moveNext() ) {
+      AddressedNode* c_node = dynamic_cast<AddressedNode*> (ni->current() );
+      this_addr = c_node->getAddress(cq);
+      if (this_addr < addr_min) { addr_min = this_addr; } //left most neighbor
+      if (this_addr > addr_max) { addr_max = this_addr; } //right modst neighbor
+      //cout << "current Address: " << c_node->getAddress(cq) << "\tc_dist: " << c_node->getDistanceTo(tnode->getAddress(cq), cq)<< endl;
+      // left neighbors
+      if (c_node->getAddress(cq) < tnode->getAddress(cq) ) {
+   	  this_dist = c_node->getDistanceTo(tnode->getAddress(cq), cq);
+	  lefters.insert( make_pair( this_dist, c_node ) );
+	  //lefters[this_dist] = c_node;
+      }
+      // right neighbors
+      else {
+	  this_dist = c_node->getDistanceTo(tnode->getAddress(cq), cq);
+	  righters.insert( make_pair( this_dist, c_node ) );
+      }
+    }
+    // If there are entries in lefters and righters, the first elements in them are direct neighbors.
+    if (lefters.size()!=0 && righters.size()!=0) {
+      dist1 = lefters.begin()->first;
+      dist2 = righters.begin()->first;
+    }
+    // else, target node is the most right node or the most left node,
+    // so, min_addr and max_addr nodes are the direct neighbors
+    else {
+      dist1 = tnode->getDistanceTo(addr_min, cq);
+      dist2 = tnode->getDistanceTo(addr_max, cq);
+    }
+    lefters.clear();
+    righters.clear();
+    //cout << "dist1 and dist2: " << dist1 << "\t" << dist2 << endl;
+    my_int d_ave = (my_int) ( (double) (dist1 + dist2) / 2.0);
+    //cout << "d_ave: " << d_ave << endl;
+    my_int d_net = (my_int)( (double) (WMAX / d_ave) + (double) (1 / d_ave) );
+    //cout << "d_net: " << d_net << endl;
+    return d_net;
   }
-  lefters.clear();
-  righters.clear();
-  //cout << "dist1 and dist2: " << dist1 << "\t" << dist2 << endl;
-  my_int d_ave = (my_int) ( (double) (dist1 + dist2) / 2.0);
-  //cout << "d_ave: " << d_ave << endl;
-  my_int d_net = (my_int)( (double) (WMAX / d_ave) + (double) (1 / d_ave) );
-  //cout << "d_net: " << d_net << endl;
-  return d_net;
 }
     
 /*

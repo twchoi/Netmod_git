@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
   //cout << "complete networks creation" << endl;
   //Add nodes
   for(int i = 0; i< nodes; i++) {
-    Action* a = new NodeJoinAction(sched, ran_no, *cacheNet_ptr.get(), *queryNet_ptr.get() );
+    Action* a = new NodeJoinAction(sched, ran_no, *cacheNet_ptr.get(), *queryNet_ptr.get() ,sq_alpha);
     sched.at(time, a);
     time += interval;  
   }
@@ -75,8 +75,9 @@ int main(int argc, char *argv[])
   {
     //cout << "item: " << *item_it << endl;
     //AddressedNode* item_source = dynamic_cast<AddressedNode*> (item_src.select() );
-    StringObject c_so;
-    c_so.content = *item_it;
+    //StringObject c_so;
+    //c_so.content = *item_it;
+    string c_so = *item_it;
     int ctime = time + ran_no.getExp(100.0);  
     Action* c_action = new CacheAction(sched, ran_no, uns, *cacheNet_ptr.get(), c_so, sq_alpha);
     sched.at(ctime, c_action);
@@ -104,6 +105,23 @@ int main(int argc, char *argv[])
   sched.at(36000000, stop);
   //std::cout << "#About to start" << std::endl;
   sched.start();
+  //check load balance, count number of replica per item.
+  for (item_it = items.begin(); item_it != items.end(); item_it++)
+  {
+    int no_rep = 0;	  
+    auto_ptr<NodeIterator> ni(cacheNet_ptr->getNodeIterator() );
+    while(ni->moveNext() ) {
+      AddressedNode* th_node = dynamic_cast<AddressedNode*>(ni->current() );
+      cout << th_node->getAddress(1) << endl;
+      string th_str = *item_it;
+      if (th_node->searchObject(th_str) ) {
+        no_rep += 1;
+      } 
+      //cout << "-------no_rep: " << no_rep << endl;
+      
+    }
+    cout << "item: " << *item_it << ", no_rep: " << no_rep << endl;
+  }
   //std::cout << "#Finished" << std::endl;
   return 0;
 }

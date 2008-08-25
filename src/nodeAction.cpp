@@ -11,7 +11,7 @@
   #define AMAX 65536L
   #define WMAX 4294967295L
 #endif
-//#define DEBUG
+#define DEBUG
 using namespace Starsky;
 using namespace std;
 
@@ -99,7 +99,7 @@ void NodeLeaveAction::Execute() {
  * When we execute, we select two random nodes and make edges to them,
  * and schedule a time to leave.
  */
-NodeJoinAction::NodeJoinAction(EventScheduler& sched, Random& r, DeetooNetwork& cn, DeetooNetwork& qn) : _sched(sched), _r(r), _cnet(cn), _qnet(qn)
+NodeJoinAction::NodeJoinAction(EventScheduler& sched, Random& r, DeetooNetwork& cn, DeetooNetwork& qn, double sq_alpha) : _sched(sched), _r(r), _cnet(cn), _qnet(qn), _sq_alpha(sq_alpha)
 {
 
 }
@@ -107,7 +107,7 @@ NodeJoinAction::NodeJoinAction(EventScheduler& sched, Random& r, DeetooNetwork& 
 void NodeJoinAction::Execute() {
   //cout << "-------------NodeJoinAction-------------- " << endl;
   my_int c_addr;
-  std::set<StringObject> items;
+  map<string, pair<my_int, my_int> > items;
   items.clear();
   AddressedNode* me = 0;
   bool fresh_addr = false;
@@ -143,10 +143,10 @@ void NodeJoinAction::Execute() {
   //Plan to rejoin
   //double sleeptime = 3600.0 * _r.getDouble01();
   double sleeptime = _r.getExp(3600.0);
-  Action* rejoin = new NodeJoinAction(_sched, _r, _cnet, _qnet);
+  Action* rejoin = new NodeJoinAction(_sched, _r, _cnet, _qnet, _sq_alpha);
   _sched.after(lifetime + sleeptime, rejoin);
   //Print out results:
-//#ifdef DEBUG
+#ifdef DEBUG
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "Node_Join\t" 
             << _cnet.getNodeSize() << "\t"
@@ -155,21 +155,23 @@ void NodeJoinAction::Execute() {
             << _qnet.getEdgeSize() << "\t"
 	    << stabilization_msgs 
 	    << std::endl;
-//#endif
+#endif
 }
 int NodeJoinAction::copyObjects(AddressedNode* me, AddressedNode* nei, bool cache) {
-    set<StringObject> so = nei->getObject();
-    set<StringObject>::iterator so_it;
+    map<string, pair<my_int, my_int> > so = nei->getObject();
+    map<string, pair<my_int, my_int> >::iterator so_it;
     int stab_cost = 0; //stabilization cost: count how many objects are copied.
     for (so_it = so.begin(); so_it != so.end(); so_it++) {
       my_int adr = me->getAddress(cache);
-      //cout << "adr: " << adr << "\tstart: " << so_it->start << "\tend: " << so_it->end << endl;
-      if (adr >= so_it->start && adr <= so_it->end) {
+      //cout << "adr: " << adr << "\tstart: " << so_it->second.first << "\tend: " << so_it->second.second << endl;
+      if (adr >= so_it->second.first && adr <= so_it->second.second) {
 	//cout << "yes, insert!!!" << endl;
-        me->insertObject(*so_it);
+	string this_str = so_it->first;
+        me->insertObject(this_str, so_it->second.first, so_it->second.second);
 	stab_cost++;
       }
       else { // this node is out of range of object. do not cache it 
+	//cout << "++++++++++++++++++++++++  out of range ------------" << endl;      
       }
     }
     return stab_cost;
@@ -238,9 +240,15 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
     if(!(net.getEdge(me, shortcut)) && !(net.getEdge(shortcut, me))) {
       net.add(Edge(me, shortcut));
     }
+    //delete out of range objects from objects list.
     int cost0 = copyObjects(me,neighbor0,cache);
     int cost1 = copyObjects(me,neighbor1,cache);
     int cost2 = copyObjects(me,shortcut,cache);
+    double guess = _cnet.guessNetSizeLog(me,1);
+    //cout << "SIZE:::::guess size : " << guess << ", actual size: " << _cnet.node_map.size() << endl;
+    double cqsize = (double) (((AMAX) / (double)sqrt(guess ) ) * _sq_alpha);
+    //cout << "CQ:: " << cqsize << endl;
+    me->stabilize(cqsize);
     stabilization_msgs = cost0 + cost1 + cost2;
 
     //make sure ring is closed.
@@ -251,7 +259,7 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
   }
 }
 
-CacheAction::CacheAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& n, StringObject so, double sq_alpha) : _sched(sched), _r(r), _ns(ns), _net(n), _so(so),  _sq_alpha(sq_alpha)
+CacheAction::CacheAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& n, string& so, double sq_alpha) : _sched(sched), _r(r), _ns(ns), _net(n), _so(so),  _sq_alpha(sq_alpha)
 {
   
 }
@@ -269,8 +277,8 @@ void CacheAction::Execute() {
   my_int rg_start = range.first;
   my_int rg_end = range.second;
   //cout << "rg_start: "<< rg_start << ", rg_end: " << rg_end << ", diff: " << rg_end-rg_start << endl;
-  _so.start = rg_start;
-  _so.end = rg_end;
+  //_so.start = rg_start;
+  //_so.end = rg_end;
   //node->insertObject(_so);
   auto_ptr<DeetooMessage> cache_m(new DeetooMessage(rg_start, rg_end, true, _r, 0.0) );
   auto_ptr<DeetooNetwork> tmp_net (cache_m->visit(node, _net));
@@ -280,9 +288,10 @@ void CacheAction::Execute() {
     //cout << "----------cacheaction: " << endl;
     //cout << "addr: " << inNode->getAddress(1) << "item: " << _so.content << endl;
     //cout << "size before insertion: " << (inNode->getObject()).size() << endl;
-    inNode->insertObject(_so);
+    inNode->insertObject(_so, rg_start, rg_end);
     //cout << "size after insertion: " << (inNode->getObject()).size() << endl;
   }
+  node->stabilize(cqsize);
 #ifdef DEBUG
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "caching\t"
@@ -290,10 +299,11 @@ void CacheAction::Execute() {
             << _net.getEdgeSize() << "\t"
 	    << tmp_net->getNodeSize() << "\t"
 	    << tmp_net->getDistance(cache_m->init_node) << "\t"
+	    << _so
 	    << std::endl;
 #endif
 }
-QueryAction::QueryAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& n, StringObject so, double sq_alpha) : _sched(sched), _r(r), _ns(ns), _net(n), _so(so), _sq_alpha(sq_alpha)
+QueryAction::QueryAction(EventScheduler& sched, Random& r, INodeSelector& ns, DeetooNetwork& n, string so, double sq_alpha) : _sched(sched), _r(r), _ns(ns), _net(n), _so(so), _sq_alpha(sq_alpha)
 {
 
 }
@@ -330,6 +340,7 @@ void QueryAction::Execute() {
     sum_hits += inNode->searchObject(_so);
   } 
   double hit_rate = (double)sum_hits / (double)no_msg;
+#ifdef DEBUG
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "querying\t"
             << _net.getNodeSize() << "\t"
@@ -340,6 +351,7 @@ void QueryAction::Execute() {
 	    << q_in_depth << "\t"
             << depth << "\t"
 	    << std::endl;
+#endif
 }
 
 

@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "node.h"
 #include <set>
+#include <map>
 #include <iostream>
 #include <vector>
 #include "dataobject.h"
@@ -34,26 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
   typedef unsigned long my_int;
 #endif
+using namespace std;
 namespace Starsky {
-  /**
-   * content: string
-   * start: start address of range
-   * end: end address of range
-   * owner: node which inserted this object into the network
-   */
-  struct StringObject {
-    std::string content;
-    my_int start;
-    my_int end;
-    //compare only contents
-    bool operator< (const StringObject& so1) const {
-      return (content < so1.content );	    
-    }
-    bool operator== (const StringObject& so1) const {
-      return (content == so1.content );
-    }
-    //AddressedNode* owner;
-  };
 
   /**
    * Addressed node class which every node in the network has address
@@ -66,7 +49,7 @@ namespace Starsky {
       // address for query 
       my_int _q_address;
       std::set<std::string> _itemSet;
-      std::set<StringObject> _objSet;
+      std::map<string, pair<my_int, my_int> > _objSet;
       //bool _own;
       my_int _dist;
       my_int _small;
@@ -84,7 +67,7 @@ namespace Starsky {
        * @param own if true, delete the item when we are deleted
        */
       AddressedNode(const my_int addr, std::set<std::string> itemSet) ;
-      AddressedNode(const my_int addr, std::set<StringObject> objSet) ;
+      AddressedNode(const my_int addr, std::map<string, pair<my_int, my_int> > objSet) ;
       ~AddressedNode() {_itemSet.clear(); _objSet.clear(); }
       
       /**
@@ -101,8 +84,8 @@ namespace Starsky {
        * return to the pointer to the object being contained.
        */
       std::set<std::string> getItem() const { return _itemSet; }
-      std::set<StringObject> getObject() const { return _objSet; }
-      //std::vector<StringObject> getObject() const { return _objSet; }
+      std::map<string, pair<my_int, my_int> > getObject() const { return _objSet; }
+      int objectCount() { return _objSet.size(); }
       /**
        * return true if this node has qItem.
        */
@@ -110,20 +93,26 @@ namespace Starsky {
       /**
        * return true if this node has qObj.
        */
-      bool searchObject( StringObject qObj);
+      bool searchObject( string& qObj);
       /**
        * @param item, insert item to a node
        */
-      void insertItem(std::string item);
+      void insertItem(std::string& item);
       /**
        * @param item, insert obj to a node
        */
-      void insertObject(StringObject obj);
+      void insertObject(string& item, my_int& a, my_int& b);
       /**
        * @param item delete this item from a node
        */
       void deleteItem(std::string item);
-      //void deleteObject(StringObject obj);
+      void deleteObject(string obj);
+
+      /**
+       * deletes objects whose range does not include this node's address
+       */
+      void stabilize(int cq_size);
+      my_int getRangeSize(double cq_size);
     };
 }
 #endif
