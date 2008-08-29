@@ -82,6 +82,7 @@ void NodeLeaveAction::Execute() {
   
   _cnet.add(Edge(c_left, c_right));
   _qnet.add(Edge(q_left, q_right));
+  /*
 #ifdef DEBUG
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "Node_Leave\t"
@@ -91,6 +92,7 @@ void NodeLeaveAction::Execute() {
 	    << _qnet.getEdgeSize() 
             << std::endl;
 #endif
+*/
 }
 
 
@@ -142,7 +144,7 @@ void NodeJoinAction::Execute() {
   _sched.after(lifetime, leave);
   //Plan to rejoin
   //double sleeptime = 3600.0 * _r.getDouble01();
-  double sleeptime = _r.getExp(3600.0);
+  double sleeptime = _r.getExp(14400.0);
   Action* rejoin = new NodeJoinAction(_sched, _r, _cnet, _qnet, _sq_alpha);
   _sched.after(lifetime + sleeptime, rejoin);
   //Print out results:
@@ -160,7 +162,7 @@ void NodeJoinAction::Execute() {
 int NodeJoinAction::copyObjects(AddressedNode* me, AddressedNode* nei, bool cache) {
     map<string, pair<my_int, my_int> > so = nei->getObject();
     map<string, pair<my_int, my_int> >::iterator so_it;
-    int stab_cost = 0; //stabilization cost: count how many objects are copied.
+    int stab_cost = 0; //stabilization cost: count how many object are copied.
     for (so_it = so.begin(); so_it != so.end(); so_it++) {
       my_int adr = me->getAddress(cache);
       //cout << "adr: " << adr << "\tstart: " << so_it->second.first << "\tend: " << so_it->second.second << endl;
@@ -314,7 +316,8 @@ void QueryAction::Execute() {
   UniformNodeSelector u_node(_r);
   _ns.selectFrom(&_net);
   AddressedNode* node = dynamic_cast<AddressedNode*> (_ns.select() );
-  double guess = _net.guessNetSizeLog(node,1);
+  double guess = _net.guessNetSizeLog(node,0);
+  //cout << "querying: guess: " << guess << endl;
   //double guess = _net.getNodeSize();
   //cout << "q_addr: " << node->getAddress(0) << ", sq_alpha: " << _sq_alpha << ", guessNetSize: " << guess << endl;
   //double cqsize = (double) (((WMAX ) / (double)sqrt(_net.guessNetSizeLog(node,0) ) ) * _sq_alpha);

@@ -124,17 +124,22 @@ void AddressedNode::stabilize(int cq_size)
   //cout << "addr: " << _c_address << "\t" ;
   my_int new_start;
   my_int new_end;
+  my_int mid = 0;
   map<string, pair<my_int, my_int> >::iterator obj_it;
   for (obj_it = _objSet.begin(); obj_it != _objSet.end(); obj_it++) {
     my_int old_start = obj_it->second.first;
     my_int old_end = obj_it->second.second;
-    my_int mid = (my_int)((old_start + old_end) / 2);
+    mid = (my_int)((old_start/2) + (old_end/2) );
     my_int range_size = getRangeSize(cq_size);
     new_start = mid - (range_size/2);
     new_end = mid + (range_size/2);
     //cout << "------cqsize------: " << cq_size << endl;
-    //cout << "oldstart: " << old_start << ", oldend: " << old_end << ", mid: " << mid << endl;
-    //cout << "start: " << new_start << ", end: " << new_end << endl;
+    /*
+    cout << obj_it->first << "\t***********************************" << endl;
+    cout << "oldstart: " << old_start << ", oldend: " << old_end << ", mid: " << mid << endl;
+    cout << "start: " << new_start << ", end: " << new_end << endl;
+    cout << "o_gap: " << (old_end-old_start) << ", n_gap: " << (new_end-new_start) << endl;
+    */
     obj_it->second.first = new_start;
     obj_it->second.second = new_end;
     if( _c_address >= new_start && _c_address <= new_end) {

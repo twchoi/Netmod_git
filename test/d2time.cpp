@@ -20,7 +20,7 @@ using namespace std;
   #define ADDR_MAX 65536L
   #define WMAX 4294967295L
 #endif
-//#define DEBUG
+#define DEBUG
 //random string generator
 std::set<std::string> rstringGenerator ( int howmany, int length, Random& r )
 {
@@ -81,18 +81,22 @@ int main(int argc, char *argv[])
     int ctime = time + ran_no.getExp(100.0);  
     Action* c_action = new CacheAction(sched, ran_no, uns, *cacheNet_ptr.get(), c_so, sq_alpha);
     sched.at(ctime, c_action);
+    /*
 #ifdef DEBUG
     cout << "cache time: " << ctime << endl;
 #endif
+*/
     //schedule query actions
     UniformNodeSelector q_start(ran_no);
     for (int iter = 0; iter < 100; iter++) {
       //AddressedNode* q_node = dynamic_cast<AddressedNode*> (q_start.select() );
       Action* q_action = new QueryAction(sched, ran_no, q_start, *queryNet_ptr.get(), c_so, sq_alpha);
       int qtime = ctime + ran_no.getExp(3600.0);
+      /*
 #ifdef DEBUG
       cout << "query time: " << qtime << endl;
 #endif
+*/
       sched.at(qtime, q_action);
       ctime = qtime;
       //time += interval; 
@@ -106,13 +110,14 @@ int main(int argc, char *argv[])
   //std::cout << "#About to start" << std::endl;
   sched.start();
   //check load balance, count number of replica per item.
+  /*
   for (item_it = items.begin(); item_it != items.end(); item_it++)
   {
     int no_rep = 0;	  
     auto_ptr<NodeIterator> ni(cacheNet_ptr->getNodeIterator() );
     while(ni->moveNext() ) {
       AddressedNode* th_node = dynamic_cast<AddressedNode*>(ni->current() );
-      cout << th_node->getAddress(1) << endl;
+      //cout << th_node->getAddress(1) << endl;
       string th_str = *item_it;
       if (th_node->searchObject(th_str) ) {
         no_rep += 1;
@@ -122,6 +127,7 @@ int main(int argc, char *argv[])
     }
     cout << "item: " << *item_it << ", no_rep: " << no_rep << endl;
   }
+  */
   //std::cout << "#Finished" << std::endl;
   return 0;
 }
