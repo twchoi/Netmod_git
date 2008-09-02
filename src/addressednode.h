@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <map>
 #include <iostream>
 #include <vector>
-#include "dataobject.h"
 //#define INT64
 #ifdef INT64
   typedef unsigned long long my_int;

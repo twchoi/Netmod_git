@@ -159,12 +159,12 @@ void NodeJoinAction::Execute() {
 	    << std::endl;
 #endif
 }
-int NodeJoinAction::copyObjects(AddressedNode* me, AddressedNode* nei, bool cache) {
+int NodeJoinAction::copyObjects(AddressedNode* me, AddressedNode* nei) {
     map<string, pair<my_int, my_int> > so = nei->getObject();
     map<string, pair<my_int, my_int> >::iterator so_it;
     int stab_cost = 0; //stabilization cost: count how many object are copied.
     for (so_it = so.begin(); so_it != so.end(); so_it++) {
-      my_int adr = me->getAddress(cache);
+      my_int adr = me->getAddress(true);
       //cout << "adr: " << adr << "\tstart: " << so_it->second.first << "\tend: " << so_it->second.second << endl;
       if (adr >= so_it->second.first && adr <= so_it->second.second) {
 	//cout << "yes, insert!!!" << endl;
@@ -227,12 +227,6 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
       net.remove(old_edge);
     }
     AddressedNode* shortcut = net.returnShortcutNode(me, net.node_map,true);
-    //cout << "before edge addition: " << net.getEdgeSize() << endl;
-    //set<AddressedNode*> neis;
-    //neis.insert(neighbor0);
-    //neis.insert(neighbor1);
-    //neis.insert(shortcut);
-    //net.makeShortcutConnection(net.node_map, true);
     if(!(net.getEdge(me, neighbor0)) && !(net.getEdge(neighbor0, me))) {
       net.add(Edge(me, neighbor0));
     }
@@ -242,16 +236,20 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
     if(!(net.getEdge(me, shortcut)) && !(net.getEdge(shortcut, me))) {
       net.add(Edge(me, shortcut));
     }
-    //delete out of range objects from objects list.
-    int cost0 = copyObjects(me,neighbor0,cache);
-    int cost1 = copyObjects(me,neighbor1,cache);
-    int cost2 = copyObjects(me,shortcut,cache);
-    double guess = _cnet.guessNetSizeLog(me,1);
-    //cout << "SIZE:::::guess size : " << guess << ", actual size: " << _cnet.node_map.size() << endl;
-    double cqsize = (double) (((AMAX) / (double)sqrt(guess ) ) * _sq_alpha);
-    //cout << "CQ:: " << cqsize << endl;
-    me->stabilize(cqsize);
-    stabilization_msgs = cost0 + cost1 + cost2;
+    if (cache) {
+      // copy objects from my new neighbors if their range includes my address.
+      int cost0 = copyObjects(me,neighbor0);
+      int cost1 = copyObjects(me,neighbor1);
+      //int cost2 = copyObjects(me,shortcut);
+      double guess = _cnet.guessNetSizeLog(me,1);
+      //cout << "SIZE:::::guess size : " << guess << ", actual size: " << _cnet.node_map.size() << endl;
+      double cqsize = (double) (((AMAX) / (double)sqrt(guess ) ) * _sq_alpha);
+      //cout << "CQ:: " << cqsize << endl;
+      //delete out of range objects from objects list.
+      me->stabilize(cqsize);
+      //stabilization_msgs = cost0 + cost1 + cost2;
+      stabilization_msgs = cost0 + cost1;
+    }
 
     //make sure ring is closed.
     AddressedNode* front = net.node_map.begin()->second;
