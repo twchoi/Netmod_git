@@ -144,10 +144,11 @@ void NodeJoinAction::Execute() {
   _sched.after(lifetime, leave);
   //Plan to rejoin
   //double sleeptime = 3600.0 * _r.getDouble01();
-  double sleeptime = _r.getExp(14400.0);
+  double sleeptime = _r.getExp(3600.0);
   Action* rejoin = new NodeJoinAction(_sched, _r, _cnet, _qnet, _sq_alpha);
   _sched.after(lifetime + sleeptime, rejoin);
   //Print out results:
+/*
 #ifdef DEBUG
   std::cout << _sched.getCurrentTime() << "\t"
 	    << "Node_Join\t" 
@@ -158,6 +159,7 @@ void NodeJoinAction::Execute() {
 	    << stabilization_msgs 
 	    << std::endl;
 #endif
+*/
 }
 int NodeJoinAction::copyObjects(AddressedNode* me, AddressedNode* nei) {
     map<string, pair<my_int, my_int> > so = nei->getObject();
@@ -167,10 +169,13 @@ int NodeJoinAction::copyObjects(AddressedNode* me, AddressedNode* nei) {
       my_int adr = me->getAddress(true);
       //cout << "adr: " << adr << "\tstart: " << so_it->second.first << "\tend: " << so_it->second.second << endl;
       if (adr >= so_it->second.first && adr <= so_it->second.second) {
-	//cout << "yes, insert!!!" << endl;
-	string this_str = so_it->first;
-        me->insertObject(this_str, so_it->second.first, so_it->second.second);
-	stab_cost++;
+	string str = so_it->first;
+	if (!me->searchObject(str) ) {
+	  //cout << "yes, insert!!!" << endl;
+	  string this_str = so_it->first;
+          me->insertObject(this_str, so_it->second.first, so_it->second.second);
+	  stab_cost++;
+        }
       }
       else { // this node is out of range of object. do not cache it 
 	//cout << "++++++++++++++++++++++++  out of range ------------" << endl;      
@@ -236,10 +241,13 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
     if(!(net.getEdge(me, shortcut)) && !(net.getEdge(shortcut, me))) {
       net.add(Edge(me, shortcut));
     }
+
     if (cache) {
       // copy objects from my new neighbors if their range includes my address.
       int cost0 = copyObjects(me,neighbor0);
       int cost1 = copyObjects(me,neighbor1);
+      //stabilization_msgs = cost0 + cost1 + cost2;
+      stabilization_msgs = cost0 + cost1;
       //int cost2 = copyObjects(me,shortcut);
       double guess = _cnet.guessNetSizeLog(me,1);
       //cout << "SIZE:::::guess size : " << guess << ", actual size: " << _cnet.node_map.size() << endl;
@@ -247,8 +255,6 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
       //cout << "CQ:: " << cqsize << endl;
       //delete out of range objects from objects list.
       me->stabilize(cqsize);
-      //stabilization_msgs = cost0 + cost1 + cost2;
-      stabilization_msgs = cost0 + cost1;
     }
 
     //make sure ring is closed.
