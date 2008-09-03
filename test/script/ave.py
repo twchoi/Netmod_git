@@ -1,41 +1,43 @@
 #!/usr/bin/env python
 import sys, math
 from pylab import *
-def whichwindow(x):
-  list = [ j for j in arange(0, 36000000, 3600) ]
+def whichwindow(x, list):
   #idx = list.index(x)
   for i in list:
     if x > i:
       idx = list.index(i)
   return idx
 
-def caclulateresult(data, windows):
+def calculateresult(windows):
+  result = [[666.0,896,0,1]]
   for win in windows:
-    cost_ave = sum(z for [x,y,z,w] in win) / len(win)
-    size_ave = sum(y for [x,y,z,w] in win) / len(win)
-    cache_ave = sum(w for [x,y,z,w] in win) / len(win)
-    t = win[-1][0]
-    time.append(time)
-    size.append(size_ave)
-    cost.append(cost_ave)
-    cache.append(cache_ave)
-  return time, size, cost, cache
+    time = win[-1][0]
+    size = float(sum(y for [x,y,z,w] in win) )/ float(len(win) )
+    cache = float(sum(w for [x,y,z,w] in win) ) / float(len(win) )
+    cost = float(sum(z for [x,y,z,w] in win) ) / float(len(win) )
+    result.append([time,size,cost,cache])
+  return result 
 
 infilename = sys.argv[1]
 ifile = open(infilename, 'r')
 
 result = []
-win = [[]]
+lst = [i for i in arange(0,40000000, 3600) ]
+win = [ [] for k in arange(len(lst) ) ]
 
-print whichwindow(666)
 for line in ifile:
   data = line.split()
-  time = float(data[0])
+  time = round(float(data[0]) )
   size = int(data[1])
   cost = int(data[2])
   cache = int(data[3])
-  index = whichwindow(time)
-  print time, size, cost, cache, index
-  win[index].append = [time,cost, size, cache]
+  index = whichwindow(time,lst)
+  #print time, size, cost, cache, index
+  win[index].append([time, size, cost, cache])
+#print 'win', win
 
-print win 
+output = calculateresult(win)
+print 'time    size    cost    cache'
+for out in output:
+  print out[0], out[1], out[2], out[3]
+#print output
