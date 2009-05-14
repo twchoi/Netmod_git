@@ -128,6 +128,10 @@ class DeetooNetwork : public Network {
 	 * using distance between log_N neighbors
 	 */
 	my_int guessNetSizeLog(AddressedNode* tnode, bool cq);
+	std::vector<int> guessNetSizeNeighbors(AddressedNode* tnode, bool cq);
+	int guessNetSizeNeis(AddressedNode* tnode, bool cq);
+	void printVector(std::vector<int> my_vec);
+	int getMedian(std::vector<int> my_vec);
 	/**
 	 * @param net_size total number of nodes in this creating network
 	 * for making network with evenly distributed nodes in address space.

@@ -101,7 +101,6 @@ void DeetooNetwork::create(int n) {
     //Let's make n different nodes!!
     node_map.clear();
     // 1. Random network
-    /**
     while(node_map.size() < n) 
     {
 	my_int r_addr = (my_int)(_r_short.getDouble01() * (WMAX) );
@@ -113,7 +112,6 @@ void DeetooNetwork::create(int n) {
 	    add(anode);
 	}
     }
-    */
     // 2. uniform network
     /**
     while(node_map.size() < n)
@@ -128,6 +126,7 @@ void DeetooNetwork::create(int n) {
       u_addr += step;
     }
     */
+    /**
     // 3. diagonal network
     double step = (double)(AMAX/(double)n);
     //cout << "step: " << step << endl;
@@ -147,6 +146,7 @@ void DeetooNetwork::create(int n) {
       add(anode);
       t_addr += step;
     }
+    */
 
     //Form ring.
     formRing(node_map);
@@ -160,7 +160,8 @@ void DeetooNetwork::createNullNet() {
 void DeetooNetwork::createQueryNet(const std::map<my_int, AddressedNode*>& nd_map)
 {
     //using addresses in query space, make node map for query.
-    query_nm.clear();
+    //query_nm.clear();
+    node_map.clear();
     my_int query_addr=0;
     AddressedNode* q_node;
     std::map<my_int, AddressedNode*>::const_iterator itNd_map;
@@ -174,13 +175,13 @@ void DeetooNetwork::createQueryNet(const std::map<my_int, AddressedNode*>& nd_ma
 		
 	q_node = dynamic_cast<AddressedNode*> (itNd_map->second);
 	add(q_node);
-	query_nm[query_addr] = q_node;
+	node_map[query_addr] = q_node;
     }
     
     //form ring.
-    formRing(query_nm);
+    formRing(node_map);
     //make shortcut connection.
-    makeShortcutConnection(query_nm,false);
+    makeShortcutConnection(node_map,false);
     //printNetInfo(false);
     
 }
@@ -270,31 +271,14 @@ my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq)
   //cout << "log_d: " << log_d << endl;
   //cout << "nd_map size: " << node_map.size() << "\tquery_nm size: " << query_nm.size() << endl;
   std::map<my_int, AddressedNode*>::const_iterator upper;
-  //cout << "--------------------------------" << endl;
-  //if (cq) {
-    //log_d = (my_int)(log(node_map.size()) );
-    upper = node_map.upper_bound(tnode->getAddress(cq) );
-    for (int iter = 0; iter < log_d; iter++) {
-      if (upper == node_map.end() ) {
-        upper = node_map.begin();
-      }
-      //cout << upper->first << endl;
-      upper++;
+  upper = node_map.upper_bound(tnode->getAddress(cq) );
+  for (int iter = 0; iter < log_d; iter++) {
+    if (upper == node_map.end() ) {
+      upper = node_map.begin();
     }
-  //}
-  /*
-  else {
-    //log_d = (my_int)(log(query_nm.size()) );
-    upper = query_nm.upper_bound(tnode->getAddress(cq) );
-    for (int iter = 0; iter < log_d; iter++) {
-      if (upper == query_nm.end() ) {
-        upper = query_nm.begin();
-      }
-      ////cout << upper->first << endl;
-      upper++;
-    }
+    //cout << upper->first << endl;
+    upper++;
   }
-  */
 
   my_int dist_to = tnode->getDistanceTo(upper->first, cq);
   //cout << dist_to << "\t" << log_d << endl;
@@ -305,6 +289,72 @@ my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq)
   return new_est;
 
 }
+std::vector<int> DeetooNetwork::guessNetSizeNeighbors(AddressedNode* tnode, bool cq)
+{
+  int sum_size1 = 0;
+  int sum_size2 = 0;
+  int count = 0;
+  std::vector<int> my_vec1;
+  std::vector<int> my_vec2;
+  my_vec1.clear();
+  my_vec2.clear();
+  auto_ptr<NodeIterator> ni(getNeighborIterator(tnode) );
+  while (ni->moveNext() ) {
+    AddressedNode* c_node = dynamic_cast<AddressedNode*> (ni->current() );
+    int e_size1 = guessNetSize(c_node,cq);
+    sum_size1 += e_size1;
+    int e_size2 = guessNetSizeLog(c_node,cq);
+    sum_size2 += e_size2;
+    my_vec1.push_back(e_size1);
+    my_vec2.push_back(e_size2);
+    count++;
+  }
+  int my_size1 = guessNetSize(tnode,cq);
+  int my_size2 = guessNetSizeLog(tnode,cq);
+  my_vec1.push_back(my_size1);
+  my_vec2.push_back(my_size2);
+  sum_size1 += my_size1;
+  sum_size2 += my_size2;
+  count++;
+  int mean_1 = (my_int)((double)(sum_size1) / (double)(count));
+  int mean_2 = (my_int)((double)(sum_size2) / (double)(count));
+  int median_1 = getMedian(my_vec1);
+  int median_2 = getMedian(my_vec2);
+  std::vector<int> result;
+  result.push_back(mean_1);
+  result.push_back(mean_2);
+  result.push_back(median_1);
+  result.push_back(median_2);
+  return result;
+}
+int DeetooNetwork::guessNetSizeNeis(AddressedNode* tnode, bool cq)
+{
+  std::vector<int> my_vec;
+  my_vec.clear();
+  std::map<my_int, int> my_map;
+  my_map.clear();
+  auto_ptr<NodeIterator> ni(getNeighborIterator(tnode) );
+  while (ni->moveNext() ) {
+    AddressedNode* c_node = dynamic_cast<AddressedNode*> (ni->current() );
+    my_int c_addr = c_node->getAddress(cq);
+    my_int dist = tnode->getDistanceTo(c_addr,cq);
+    int e_size = guessNetSizeLog(c_node,cq);
+    my_map[dist] = e_size;
+  }
+  int idx = 0;
+  std::map<my_int, int>::iterator it;
+  for (it = my_map.begin(); it!=my_map.end(); it++) {
+    if (idx >1) {
+      my_vec.push_back(it->second);
+    }
+    idx++;
+  }
+  int my_size = guessNetSizeLog(tnode,cq);
+  my_vec.push_back(my_size);
+  int median = getMedian(my_vec);
+  return median;
+}
+
 my_int DeetooNetwork::guessNetSize(AddressedNode* tnode,bool cq)
 {
   std::map<my_int,AddressedNode*> lefters, righters;
@@ -470,4 +520,31 @@ std::pair<my_int, my_int> DeetooNetwork::getRange(double cq_size) {
      range1 = (my_int) ( (end_cr * AMAX) + AMAX -1 );
  }
   return make_pair(range0, range1);
+}
+
+int DeetooNetwork::getMedian(std::vector<int> my_vec) {
+  int idx;
+  int average;
+  int size = my_vec.size();
+  sort(my_vec.begin(), my_vec.end() );
+  //printVector(my_vec);
+  if (size % 2) {
+    idx = size / 2;
+    average = (int)(my_vec[idx]);
+  }
+  else {
+    idx = (int)(size / 2);
+    int first = my_vec[idx-1];
+    int second = my_vec[idx];
+    average = (int)((first+second)/2);
+  }
+  return average;
+}
+void DeetooNetwork::printVector(std::vector<int> my_vec) {
+  cout << "my_vec: ";
+  std::vector<int>::iterator it;
+  for (it = my_vec.begin(); it != my_vec.end() ; it++) {
+    cout << *it << ", ";
+  }
+  cout << endl;
 }
