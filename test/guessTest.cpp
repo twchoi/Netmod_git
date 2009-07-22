@@ -34,7 +34,7 @@ map<double,double> makePdfMap(const multiset<int>& in_set, int n_size)
       ret_map[cur_val] = (double)(in_set.count(*it) / (double)(n_size));
       prev = cur_val;
     }
-    //cout << "it: " << *it << "\tcur_val: " << cur_val << "\t ret_val: " << ret_map[cur_val] << endl;
+    cout << "it: " << *it << "\tcur_val: " << cur_val << "\t ret_val: " << ret_map[cur_val] << endl;
   }
   //cout << ret_map.size() << endl;
   return ret_map;

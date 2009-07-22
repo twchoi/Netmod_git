@@ -139,8 +139,12 @@ class DeetooNetwork : public Network {
 	 */
 	void createEvenNet(int net_size);
 	void createNullNet();
+	int getCountLog() { return _count_log; }
+	int getCountMedian() { return _count_median; }
     protected:
 	Random& _r_short;
+	int _count_log;
+	int _count_median;
 };
 	
 }

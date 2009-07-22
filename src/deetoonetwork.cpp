@@ -270,12 +270,14 @@ my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq)
   my_int log_d = (my_int)(log(guessNetSize(tnode,cq)) );
   //cout << "log_d: " << log_d << endl;
   //cout << "nd_map size: " << node_map.size() << "\tquery_nm size: " << query_nm.size() << endl;
+  _count_log = 0;  //cost for network size estimation
   std::map<my_int, AddressedNode*>::const_iterator upper;
   upper = node_map.upper_bound(tnode->getAddress(cq) );
   for (int iter = 0; iter < log_d; iter++) {
     if (upper == node_map.end() ) {
       upper = node_map.begin();
     }
+    _count_log++;
     //cout << upper->first << endl;
     upper++;
   }
@@ -327,6 +329,7 @@ std::vector<int> DeetooNetwork::guessNetSizeNeighbors(AddressedNode* tnode, bool
   result.push_back(median_2);
   return result;
 }
+//ask shortcut neighbors to send their log-estimation
 int DeetooNetwork::guessNetSizeNeis(AddressedNode* tnode, bool cq)
 {
   std::vector<int> my_vec;
@@ -342,10 +345,13 @@ int DeetooNetwork::guessNetSizeNeis(AddressedNode* tnode, bool cq)
     my_map[dist] = e_size;
   }
   int idx = 0;
+  _count_median = 0;
   std::map<my_int, int>::iterator it;
   for (it = my_map.begin(); it!=my_map.end(); it++) {
+    //excludes direct neighbors
     if (idx >1) {
       my_vec.push_back(it->second);
+      _count_median++;
     }
     idx++;
   }
@@ -472,6 +478,78 @@ void DeetooNetwork::createEvenNet(int net_size) {
       new_node = new AddressedNode(r_addr2,items);
       new_addr = r_addr2;
     }
+    //cout << "new addr: " << new_addr << endl;
+    if (node_map.find(new_addr) == node_map.end() && new_addr != 0) {
+      node_map[new_addr] = new_node;	    
+      add(new_node);
+    }
+  }
+  formRing(node_map);
+  makeShortcutConnection(node_map, true);
+} 
+
+my_int DeetooNetwork::getUniformAddress(int no_can, bool cache) {
+  int result_dist = 0;
+  my_int ret_addr;
+  set<my_int> addr_set;
+  for (int i = 0; i < no_can; i++) {
+    my_int r_addr = (my_int)(_r_short.getDouble01() * (WMAX) );
+    addr_set.insert(r_addr);
+  }
+  std::map<my_int, AddressedNode*>::const_iterator it_up;
+  set<my_int>::const_iterator set_it;
+  my_int up_addr, down_addr;
+  int dist2up, dist2down, sum_dist;
+  map<my_int,int> distances;
+  distances.clear();
+  for (set_it=addr_set.begin(); set_it != addr_set.end(); set_it++) {
+    it_up = node_map.upper_bound(*set_it);
+    up_addr = it_up->first;
+    down_addr = (it_up--)->first;
+    dist2up = distanceTo(up_addr, *set_it);
+    dist2down = distanceTo(down_addr, *set_it);
+    sum_dist = dist2up + dist2down;
+    distances[r_addr] = sum_dist;
+  }
+  map<my_int, int>::const_iterator map_it;
+  for (map_it = distances.begin(); map_it != distances.end(); map_it++) {
+    my_int th_addr = map_it->first;
+    int th_dist = map_it->second;
+    if (th_dist > result) {
+      ret_addr = th_addr;
+      result = th_dist;
+    }
+  }
+  return result;
+}
+/*
+ * createEvenNet is for making network with evenly distributed nodes in address space
+ * When a new node join, maximize minimum distance to the neighbors 
+ * by picking up two candidate addresses and finally select an address 
+ * with longer minimum distance to the neighbors.
+ */
+void DeetooNetwork::createEvenNet(int net_size, my_int new_addr) {
+  node_map.clear();
+  std::set<std::string> items;
+  items.clear();
+  //add first 2 nodes in the network.
+  while(node_map.size() < 2) 
+  {
+    my_int r_addr = (my_int)(_r_short.getDouble01() * (WMAX) );
+    if (node_map.find(r_addr) == node_map.end() && r_addr != 0){
+      AddressedNode* anode = new AddressedNode(r_addr, items);
+      //cout << "first address: " << r_addr << endl;
+      node_map[r_addr] = anode;
+      add(anode);
+    }
+  }
+  //add all the others.
+  std::map<my_int, AddressedNode*>::const_iterator it_up;
+  while( node_map.size() < net_size) {
+    //cout << "------------------------------" << endl;
+    //cout << "node_map.size(): " << node_map.size() << endl;
+    //first location
+    AddressedNode* new_node = new AddressedNode(r_addr1,items);
     //cout << "new addr: " << new_addr << endl;
     if (node_map.find(new_addr) == node_map.end() && new_addr != 0) {
       node_map[new_addr] = new_node;	    
