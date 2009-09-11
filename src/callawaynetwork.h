@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "node.h"
 #include "edge.h"
 #include "random.h"
+#include <memory>
 
 #include <vector>
 

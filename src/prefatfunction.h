@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "directednetwork.h"
 #include "random.h"
 #include "edge.h"
+#include <memory>
 #include "degreepreferencefunction.h"
 
 //This is used by one of the methods internally

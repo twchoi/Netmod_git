@@ -19,40 +19,20 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef starsky__magnetmessage
-#define starsky__magnetmessage
+#include <netmodeler.h>
 
-#include "message.h"
-#include "random.h"
-#include <memory>
+using namespace std;
+using namespace Starsky;
 
-namespace Starsky {
+int main(int argc, char* argv[]) {
 
-/**
- * A message which is passed to a random neighbor with probability
- * (1-p) and to go to the neighbor with maximum degree with
- * probability p.
- *
- * Currently, this node treats all edges without directionality.
- */
-	
-class MagnetMessage : public Message {
+  //Read in a network, compare the null partition, and the component partition:
+  //
+  Ran1Random r;
+  double m = atof(argv[1]);
+  for(int i = 0; i < 100000; i++) {
+    double no = r.getExp(m);
+    cout << no << endl;
+  }
 
-    public:
-        MagnetMessage(Random& r, double p, int ttl=-1);
-	/**
-	 * Return the nodes and edges passed by this visit
-	 * @param n the node to visit
-	 * @param aNet the network to visit
-	 */
-	virtual Network* visit(Node* n, Network& aNet);
-	
-    protected:
-	Random& _rand;
-	double _p;
-	int _ttl;
-};
-	
 }
-
-#endif

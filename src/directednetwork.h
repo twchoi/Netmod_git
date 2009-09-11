@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define starsky__directednetwork_h
 
 #include <map>
+#include <memory>
 #include <set>
 #include <iostream>
 #include <math.h>

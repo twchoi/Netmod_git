@@ -249,7 +249,7 @@ void NodeJoinAction::getConnection(DeetooNetwork& net, AddressedNode* me, bool c
       //stabilization_msgs = cost0 + cost1 + cost2;
       stabilization_msgs = cost0 + cost1;
       //int cost2 = copyObjects(me,shortcut);
-      double guess = _cnet.guessNetSizeLog(me,1);
+      double guess = _cnet.guessNetSizeLog(me,1,1);
       //cout << "SIZE:::::guess size : " << guess << ", actual size: " << _cnet.node_map.size() << endl;
       double cqsize = (double) (((AMAX) / (double)sqrt(guess ) ) * _sq_alpha);
       //cout << "CQ:: " << cqsize << endl;
@@ -274,7 +274,7 @@ void CacheAction::Execute() {
   //schedule a time to cache object to nodes in the range:
   _ns.selectFrom(&_net);
   AddressedNode* node = dynamic_cast<AddressedNode*> (_ns.select() );
-  double guess = _net.guessNetSizeLog(node,1);
+  double guess = _net.guessNetSizeLog(node,1,1);
   //double guess = _net.getNodeSize();
   //cout << "c_addr: " << node->getAddress(1) << ", sq_alpha: " << _sq_alpha << ", guessNetSize: " << guess << endl;
   double cqsize = (double) (((AMAX) / (double)sqrt(guess ) ) * _sq_alpha);
@@ -320,7 +320,7 @@ void QueryAction::Execute() {
   UniformNodeSelector u_node(_r);
   _ns.selectFrom(&_net);
   AddressedNode* node = dynamic_cast<AddressedNode*> (_ns.select() );
-  double guess = _net.guessNetSizeLog(node,0);
+  double guess = _net.guessNetSizeLog(node,0,1);
   //cout << "querying: guess: " << guess << endl;
   //double guess = _net.getNodeSize();
   //cout << "q_addr: " << node->getAddress(0) << ", sq_alpha: " << _sq_alpha << ", guessNetSize: " << guess << endl;

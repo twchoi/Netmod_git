@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <swedgerewirer.h>
 #include <uniformnodeselector.h>
 #include <swnodeselector.h>
+#include <memory>
 
 #define FOREACH(it, col) for(it = col.begin(); it != col.end(); it++)
 

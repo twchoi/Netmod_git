@@ -112,6 +112,7 @@ namespace Starsky {
        */
       void stabilize(int cq_size);
       my_int getRangeSize(double cq_size);
+      bool isBetweenFromLeft(my_int start, my_int end, bool cq);
     };
 }
 #endif

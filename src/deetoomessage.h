@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <deetoonetwork.h>
 #include <ran1random.h>
 #include <random.h>
+#include <memory>
 
 //#define INT64
 #ifdef INT64
@@ -65,6 +66,7 @@ class DeetooMessage : public Message {
      * @return a network consisting of all the nodes and edges crossed in a broadcast.
      **/
     virtual DeetooNetwork* visit(Node* anode, Network& aNet);	
+    virtual DeetooNetwork* visitD1(Node* anode, Network& aNet);	
     void cacheItems(AddressedNode* cache_node, DeetooNetwork* o_net);	
     /**
      * This will check if node is in the range (_r0, _r1)
@@ -95,6 +97,7 @@ class DeetooMessage : public Message {
      * is an optimization for speed and memory
      */
     void visit(AddressedNode* anode, Network& net_to_visit, DeetooNetwork& visited_net);
+    void visitD1(AddressedNode* anode, Network& net_to_visit, DeetooNetwork& visited_net);
   };
 	
 }

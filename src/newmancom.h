@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define starsky__newmancom_h
 
 #include "agglompart.h"
+#include <memory>
 
 namespace Starsky {
 

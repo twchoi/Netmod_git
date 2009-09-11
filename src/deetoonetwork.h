@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <memory>
 //#define INT64
 #ifdef INT64
   typedef unsigned long long my_int;
@@ -127,7 +128,7 @@ class DeetooNetwork : public Network {
 	/**
 	 * using distance between log_N neighbors
 	 */
-	my_int guessNetSizeLog(AddressedNode* tnode, bool cq);
+	my_int guessNetSizeLog(AddressedNode* tnode, bool cq, int con);
 	std::vector<int> guessNetSizeNeighbors(AddressedNode* tnode, bool cq);
 	int guessNetSizeNeis(AddressedNode* tnode, bool cq);
 	void printVector(std::vector<int> my_vec);
@@ -138,9 +139,12 @@ class DeetooNetwork : public Network {
 	 * when a new node join, maximize minimum distance to the neighbors' address by picking up two candidate addresses then finally select and address with longer minimum distance to the neighbors.
 	 */
 	void createEvenNet(int net_size);
+	void createEvenNet(int size, my_int addr);
+	my_int getUniformAddress(int no_can, bool cache);
 	void createNullNet();
 	int getCountLog() { return _count_log; }
 	int getCountMedian() { return _count_median; }
+	int brokenEdges(float p);
     protected:
 	Random& _r_short;
 	int _count_log;

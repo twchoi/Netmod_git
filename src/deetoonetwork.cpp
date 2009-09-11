@@ -265,9 +265,9 @@ vector<my_int> DeetooNetwork::getNeighborDist(bool cq) {
   }
   return ret_val;
 }
-my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq)
+my_int DeetooNetwork::guessNetSizeLog(AddressedNode* tnode,bool cq, int con)
 {
-  my_int log_d = (my_int)(log(guessNetSize(tnode,cq)) );
+  my_int log_d = con * (my_int)(log(guessNetSize(tnode,cq)) );
   //cout << "log_d: " << log_d << endl;
   //cout << "nd_map size: " << node_map.size() << "\tquery_nm size: " << query_nm.size() << endl;
   _count_log = 0;  //cost for network size estimation
@@ -305,14 +305,14 @@ std::vector<int> DeetooNetwork::guessNetSizeNeighbors(AddressedNode* tnode, bool
     AddressedNode* c_node = dynamic_cast<AddressedNode*> (ni->current() );
     int e_size1 = guessNetSize(c_node,cq);
     sum_size1 += e_size1;
-    int e_size2 = guessNetSizeLog(c_node,cq);
+    int e_size2 = guessNetSizeLog(c_node,cq,1);
     sum_size2 += e_size2;
     my_vec1.push_back(e_size1);
     my_vec2.push_back(e_size2);
     count++;
   }
   int my_size1 = guessNetSize(tnode,cq);
-  int my_size2 = guessNetSizeLog(tnode,cq);
+  int my_size2 = guessNetSizeLog(tnode,cq,1);
   my_vec1.push_back(my_size1);
   my_vec2.push_back(my_size2);
   sum_size1 += my_size1;
@@ -341,7 +341,7 @@ int DeetooNetwork::guessNetSizeNeis(AddressedNode* tnode, bool cq)
     AddressedNode* c_node = dynamic_cast<AddressedNode*> (ni->current() );
     my_int c_addr = c_node->getAddress(cq);
     my_int dist = tnode->getDistanceTo(c_addr,cq);
-    int e_size = guessNetSizeLog(c_node,cq);
+    int e_size = guessNetSizeLog(c_node,cq,1);
     my_map[dist] = e_size;
   }
   int idx = 0;
@@ -355,7 +355,7 @@ int DeetooNetwork::guessNetSizeNeis(AddressedNode* tnode, bool cq)
     }
     idx++;
   }
-  int my_size = guessNetSizeLog(tnode,cq);
+  int my_size = guessNetSizeLog(tnode,cq,1);
   my_vec.push_back(my_size);
   int median = getMedian(my_vec);
   return median;
@@ -488,12 +488,14 @@ void DeetooNetwork::createEvenNet(int net_size) {
   makeShortcutConnection(node_map, true);
 } 
 
+/**
 my_int DeetooNetwork::getUniformAddress(int no_can, bool cache) {
   int result_dist = 0;
   my_int ret_addr;
   set<my_int> addr_set;
+  my_int r_addr;
   for (int i = 0; i < no_can; i++) {
-    my_int r_addr = (my_int)(_r_short.getDouble01() * (WMAX) );
+    r_addr = (my_int)(_r_short.getDouble01() * (WMAX) );
     addr_set.insert(r_addr);
   }
   std::map<my_int, AddressedNode*>::const_iterator it_up;
@@ -522,12 +524,14 @@ my_int DeetooNetwork::getUniformAddress(int no_can, bool cache) {
   }
   return result;
 }
+*/
 /*
  * createEvenNet is for making network with evenly distributed nodes in address space
  * When a new node join, maximize minimum distance to the neighbors 
  * by picking up two candidate addresses and finally select an address 
  * with longer minimum distance to the neighbors.
  */
+/**
 void DeetooNetwork::createEvenNet(int net_size, my_int new_addr) {
   node_map.clear();
   std::set<std::string> items;
@@ -559,6 +563,7 @@ void DeetooNetwork::createEvenNet(int net_size, my_int new_addr) {
   formRing(node_map);
   makeShortcutConnection(node_map, true);
 } 
+*/
 
 vector<int> DeetooNetwork::getNeighborDistHist(int bins) const {
 
@@ -625,4 +630,20 @@ void DeetooNetwork::printVector(std::vector<int> my_vec) {
     cout << *it << ", ";
   }
   cout << endl;
+}
+
+int DeetooNetwork::brokenEdges(float p) {
+  cout << "initial edge size: " << getEdgeSize() << endl;
+  int no_removed = 0;
+  auto_ptr<EdgeIterator> ei( getEdgeIterator() );
+  while (ei->moveNext() ) {
+    Edge* this_edge = ei->current();
+    float p_fail = _r_short.getDouble01();
+    if ( p_fail < p ) {
+      cout << "p: " << p << " p_fail(ran_no): " << p_fail << endl;
+      no_removed += this->remove(this_edge);
+      cout << "no_removed: " << no_removed << endl;
+    }
+  }
+  return no_removed;
 }

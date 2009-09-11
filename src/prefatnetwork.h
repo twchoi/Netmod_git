@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "edge.h"
 #include "degreepreferencefunction.h"
 #include "linearpreference.h"
+#include <memory>
 
 //This is used by one of the methods internally
 #include <vector>
