@@ -633,16 +633,16 @@ void DeetooNetwork::printVector(std::vector<int> my_vec) {
 }
 
 int DeetooNetwork::brokenEdges(float p) {
-  cout << "initial edge size: " << getEdgeSize() << endl;
+  //cout << "initial edge size: " << getEdgeSize() << endl;
   int no_removed = 0;
   auto_ptr<EdgeIterator> ei( getEdgeIterator() );
   while (ei->moveNext() ) {
     Edge* this_edge = ei->current();
     float p_fail = _r_short.getDouble01();
     if ( p_fail < p ) {
-      cout << "p: " << p << " p_fail(ran_no): " << p_fail << endl;
+      //cout << "p: " << p << " p_fail(ran_no): " << p_fail << endl;
       no_removed += this->remove(this_edge);
-      cout << "no_removed: " << no_removed << endl;
+      //cout << "no_removed: " << no_removed << endl;
     }
   }
   return no_removed;

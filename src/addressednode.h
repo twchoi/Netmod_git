@@ -113,6 +113,11 @@ namespace Starsky {
       void stabilize(int cq_size);
       my_int getRangeSize(double cq_size);
       bool isBetweenFromLeft(my_int start, my_int end, bool cq);
+      bool isLeftOf(AddressedNode* a, bool cq);
+      bool isRightOf(AddressedNode* a, bool cq);
+      my_int distanceTo(AddressedNode* target, bool cq);
+      my_int rightDistanceTo(AddressedNode* target, bool cq);
+      my_int leftDistanceTo(AddressedNode* target, bool cq);
     };
 }
 #endif

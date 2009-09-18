@@ -32,7 +32,7 @@ my_int SqrtEstimation(my_int start, my_int end, int no_nodes, bool cache ) {
 }
 int main(int argc, char* argv[])
 {
-  Ran1Random ran_no = Ran1Random(-1);
+  Ran1Random ran_no = Ran1Random(-2);
   //ofstream query_out("est_query.dat");
   int nodes = atoi(argv[1]);
   //string out_file = argv[3];
@@ -40,8 +40,8 @@ int main(int argc, char* argv[])
 
   //int nodes = 50000;
   //float p_fail = 0;
+  out_file << "p_fail  #brokenEdge  #nodes  bd_nd  bd_edge  bd_dep  bd_deg  ud_nd  ud_edge  ud_dep  ud_deg" << endl;
   for (float p_fail = 0.0; p_fail <= 0.31; p_fail += 0.01) {
-    cout << "====================================" << endl;
     auto_ptr<DeetooNetwork> net_ptr( new DeetooNetwork(nodes, ran_no) );
     net_ptr->create(nodes);
     int no_b_edges = net_ptr->brokenEdges(p_fail);
@@ -53,25 +53,38 @@ int main(int argc, char* argv[])
     //my_int rg_end = rg_start - 1;
     my_int rg_start = 0;
     my_int rg_end = WMAX;
+    //cout << "print net info" << endl;
+    //net_ptr->printNetInfo(1);
     auto_ptr<DeetooMessage> d2_m ( new DeetooMessage(rg_start, rg_end, true, ran_no, p_fail) );
     //cout << "after message" << endl;
-    //UniformNodeSelector item_src(ran_no);
-    //item_src.selectFrom(D2Net );
-    //AddressedNode* item_source = dynamic_cast<AddressedNode*> (item_src.select() );
+    UniformNodeSelector item_src(ran_no);
+    item_src.selectFrom(D2Net );
+    AddressedNode* source = dynamic_cast<AddressedNode*> (item_src.select() );
     //map<my_int, AddressedNode*>::const_iterator it;
-    AddressedNode* source = (D2Net->node_map.begin() )->second;
-    cout << "(start, end): (" << rg_start << ", " << rg_end << ") , source: " << source <<endl;
+    //cout << "(start, end): (" << rg_start << ", " << rg_end << ") , source: " << source <<endl;
     auto_ptr<DeetooNetwork> d2_net( d2_m->visit(source, *D2Net) );
-    cout << "1====================================" << endl;
+    //cout << "1====================================" << endl;
 
     //1-directional visit
+    source = (D2Net->node_map.begin() )->second;
     rg_start = source->getAddress(1);
     //rg_end = rg_start -1;
     rg_end = WMAX;
     auto_ptr<DeetooMessage> d1_m ( new DeetooMessage(rg_start, rg_end, true, ran_no, p_fail) );
     //cout << "after message" << endl;
-    auto_ptr<DeetooNetwork> d1_net( d2_m->visitD1(source, *D2Net) );
-    out_file << p_fail << "\t" << no_b_edges << "\t" << nodes << "\t" << d2_net->getNodeSize() << "\t" << d1_net->getNodeSize() << endl;
+    auto_ptr<DeetooNetwork> d1_net( d1_m->visitD1(source, *D2Net) );
+    //rg_end = rg_start -1;
+    //
+    cout << "~~~~~~~~~~~~~~~~~~~~~Edge" << d2_net->getEdgeSize() << endl;
+    cout << "~~~~~~~~~~~~~~~~~~~~~Node" << d2_net->getNodeSize() << endl;
+    cout << "~~~~~~~~~~~~~~~~~~~~~Edge" << d1_net->getEdgeSize() << endl;
+    cout << "~~~~~~~~~~~~~~~~~~~~~Node" << d1_net->getNodeSize() << endl;
+    my_int depth1 = d2_net->getDistance(d2_m->init_node); //in range depth
+    my_int depth2 = d1_net->getDistance(d1_m->init_node); //in range depth
+    double aveDeg1 = d2_net->getAverageDegree();
+    double aveDeg2 = d1_net->getAverageDegree();
+    out_file << p_fail << "\t" << no_b_edges << "\t" << nodes << "\t" << d2_net->getNodeSize() << "\t" << d2_net->getEdgeSize() << "\t" << depth1 << "\t" << aveDeg1 << "\t" << d1_net->getNodeSize() << "\t" << d1_net->getEdgeSize() << "\t" << depth2 << "\t" << aveDeg2 << endl;
+    
   }
 
 
