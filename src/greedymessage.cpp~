@@ -1,0 +1,104 @@
+/*
+This program is part of Netmodeler, a library for graph and network
+modeling and simulation.
+Copyright (C) 2005  University of California
+Copyright (C) 2005  P. Oscar Boykin <boykin@pobox.com>, University of Florida
+Copyright (C) 2006  Tae Woong Choi  <twchoi@ufl.edu>, University of Florida
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
+#include <greedymessage.h>
+#include <assert.h>
+
+using namespace Starsky;
+using namespace std;
+//#define INT64
+#ifdef INT64
+  typedef unsigned long long my_int;
+#else
+  typedef unsigned long my_int;
+#endif
+
+//typedef unsigned long long my_int;
+
+GreedyMessage::GreedyMessage(Node* target, bool is1D, bool isCache) : _isCache(isCache), _is1D(is1D) {
+  _is_success = false;
+  _target = dynamic_cast<AddressedNode*> (target);
+}
+
+DeetooNetwork* GreedyMessage::visit(Node* n, Network& net) {
+  DeetooNetwork* g_net = dynamic_cast<DeetooNetwork*>( net.newNetwork() );
+  AddressedNode* source = dynamic_cast<AddressedNode*> (n);
+  visit(source,net,*g_net);
+  return g_net;
+}
+/*
+ * uni-directional(only to left direction-address increasing) routing to target
+ * return true if message passing is successful, false if not.
+ * @param source a source node to trigger message routing.
+ * @param target a target node for message to be passed.
+ */
+void GreedyMessage::visit(AddressedNode* source, Network& net_to_visit, DeetooNetwork& visited_net) {
+  visited_net.add(source);
+  AddressedNode* next_node = NULL;
+  cout << "``````````` source: " << source->getAddress(_isCache) << ", target: " << _target->getAddress(_isCache) << endl;
+  if (source == _target) {
+    cout << "source == target" << endl;
+    _is_success = true;
+    cout << "is success? " << _is_success << endl;
+    return;
+  }
+  else {
+    //map<my_int, AddressedNode*> neighbors;
+    cout << "source != target" << endl;
+    my_int dist, dist_to_target;
+    if (_is1D) {
+      dist_to_target = source->leftDistanceTo(_target, _isCache);
+      cout << "1D, dist: " << dist_to_target << endl;
+    }
+    else {
+      dist_to_target = source->distanceTo(_target, _isCache);
+      cout << "2D, dist: " << dist_to_target << endl;
+    }
+    auto_ptr<NodeIterator> ni(net_to_visit.getNeighborIterator(source) );
+    while (ni->moveNext()  )
+    {
+      AddressedNode* current_node = dynamic_cast<AddressedNode*> (ni->current() );
+      cout << "------------- currrent_neighbor: " << current_node->getAddress(_isCache) << endl;
+      if ( dist_to_target > dist) {
+	dist_to_target = dist;
+	next_node = current_node;
+	cout << "closer node" << endl;
+	//neighbors[dist] = current_node;
+      }
+      /*
+      else {
+        //there is no closer neighbor to the target. routing failed.
+	cout << "no closer node" << endl;
+	_is_success = false;
+	return;
+      }
+      */
+    }
+    //AddressedNode* next_node = neighbors[dist];
+    cout << "after while: next_node: " << next_node->getAddress(_isCache) << endl;
+    visited_net.add(Edge(source,next_node) );
+    GreedyMessage m = GreedyMessage(_target, _is1D, _isCache);
+    m.visit(next_node, net_to_visit, visited_net);
+    return;
+  }
+   
+}
